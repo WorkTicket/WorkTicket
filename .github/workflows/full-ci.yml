@@ -79,7 +79,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/workticket
           REDIS_PASSWORD: redis_ci_password
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: src/backend/coverage.xml
           flags: backend
@@ -152,7 +152,7 @@ jobs:
       - name: Build
         run: cd src/web-dashboard && npm run build
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: src/web-dashboard/coverage/*.lcov
           flags: frontend
@@ -177,7 +177,7 @@ jobs:
       - name: Test
         run: cd src/mobile-app && npm test -- --coverage --watchAll=false
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: src/mobile-app/coverage/*.lcov
           flags: mobile
@@ -201,7 +201,7 @@ jobs:
       - name: Run tests
         run: cd src/whisper-service && python -m pytest tests/ -v --tb=short
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: src/whisper-service/coverage.xml
           flags: whisper
