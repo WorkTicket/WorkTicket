@@ -34,6 +34,6 @@ pyjwt==2.10.1
 cryptography==44.0.2
 Pillow==11.0.0
 python-magic==0.4.27
-reportlab==4.2.0
+reportlab==4.5.1
 posthog==7.18.0
 cachetools==5.5.0
