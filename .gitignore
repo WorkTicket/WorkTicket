@@ -1,0 +1,87 @@
+.aider*
+.env
+.env.*
+!.env.example
+!.env.dev.example
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+node_modules/
+.next/
+.expo/
+dist/
+.tsbuildinfo
+*.tsbuildinfo
+next-env.d.ts
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.db
+*.sqlite3
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage/
+bandit_report*.json
+bandit_final*.json
+bandit_*final*.json
+*.audit.json
+
+# SSL/TLS keys and certificates
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.csr
+
+# Kubernetes credentials
+kubeconfig*
+*.kubeconfig
+
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Docker overrides (may contain local secrets)
+docker-compose.override.yml
+.docker/
+
+# Database dumps
+*.rdb
+*.aof
+*.dump
+*.sql
+*.sql.gz
+
+# Upload directories
+uploads/
+media/
+static/uploads/
+
+# Process and backup files
+*.pid
+*.bak
+*.backup
+*.orig
+*~
+tmp/
+temp/
+.tmp/
+
+# Audit artifacts
+bandit_audit*.json
+*.audit.json
+eslint_report.json
+chaos/chaos_report.json

@@ -1,0 +1,619 @@
+# WorkTicket Celery Worker Kubernetes Deployment (H-3 / S-2 fix)
+# =============================================================================
+# Each AI queue type gets its own Deployment with 3 replicas minimum.
+# HPA scales based on queue depth (via Prometheus adapter) + CPU utilization.
+# =============================================================================
+
+# --- Celery Worker: AI Text ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-text
+  namespace: workticket
+  labels:
+    app: workticket
+    component: celery-worker
+    queue: ai_text
+spec:
+  replicas: 3
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: workticket
+      component: celery-worker
+      queue: ai_text
+  template:
+    metadata:
+      labels:
+        app: workticket
+        component: celery-worker
+        queue: ai_text
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: workticket
+                    component: celery-worker
+      terminationGracePeriodSeconds: 240
+      containers:
+        - name: worker
+          image: workticket-backend:1.0.0-beta.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - celery
+            - -A
+            - celery_app
+            - worker
+            - --loglevel=info
+            - -Q
+            - ai_text
+            - -c
+            - "3"
+            - --prefetch-multiplier
+            - "1"
+            - --without-gossip
+            - --without-mingle
+            - --max-tasks-per-child
+            - "50"
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          envFrom:
+            - configMapRef:
+                name: workticket-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_URL
+            - name: REDIS_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_BROKER_URL
+            - name: REDIS_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_CACHE_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: POSTGRES_PASSWORD
+            - name: CELERY_TASK_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CELERY_TASK_SIGNING_KEY
+            - name: CELERY_WORKER_CONCURRENCY
+              value: "3"
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 2Gi
+---
+# --- Celery Worker: AI Image ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-image
+  namespace: workticket
+  labels:
+    app: workticket
+    component: celery-worker
+    queue: ai_image
+spec:
+  replicas: 3
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: workticket
+      component: celery-worker
+      queue: ai_image
+  template:
+    metadata:
+      labels:
+        app: workticket
+        component: celery-worker
+        queue: ai_image
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: workticket
+                    component: celery-worker
+      terminationGracePeriodSeconds: 240
+      containers:
+        - name: worker
+          image: workticket-backend:1.0.0-beta.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - celery
+            - -A
+            - celery_app
+            - worker
+            - --loglevel=info
+            - -Q
+            - ai_image
+            - -c
+            - "3"
+            - --prefetch-multiplier
+            - "1"
+            - --without-gossip
+            - --without-mingle
+            - --max-tasks-per-child
+            - "50"
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          envFrom:
+            - configMapRef:
+                name: workticket-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_URL
+            - name: REDIS_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_CACHE_URL
+            - name: REDIS_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_BROKER_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: POSTGRES_PASSWORD
+            - name: CELERY_TASK_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CELERY_TASK_SIGNING_KEY
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 2Gi
+---
+# --- Celery Worker: AI Audio ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-audio
+  namespace: workticket
+  labels:
+    app: workticket
+    component: celery-worker
+    queue: ai_audio
+spec:
+  replicas: 3
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: workticket
+      component: celery-worker
+      queue: ai_audio
+  template:
+    metadata:
+      labels:
+        app: workticket
+        component: celery-worker
+        queue: ai_audio
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: workticket
+                    component: celery-worker
+      terminationGracePeriodSeconds: 240
+      containers:
+        - name: worker
+          image: workticket-backend:1.0.0-beta.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - celery
+            - -A
+            - celery_app
+            - worker
+            - --loglevel=info
+            - -Q
+            - ai_audio
+            - -c
+            - "3"
+            - --prefetch-multiplier
+            - "1"
+            - --without-gossip
+            - --without-mingle
+            - --max-tasks-per-child
+            - "50"
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          envFrom:
+            - configMapRef:
+                name: workticket-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_URL
+            - name: REDIS_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_CACHE_URL
+            - name: REDIS_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_BROKER_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: POSTGRES_PASSWORD
+            - name: CELERY_TASK_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CELERY_TASK_SIGNING_KEY
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 2Gi
+---
+# --- Celery Worker: Default (non-AI tasks) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-default
+  namespace: workticket
+  labels:
+    app: workticket
+    component: celery-worker
+    queue: default
+spec:
+  replicas: 2
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: workticket
+      component: celery-worker
+      queue: default
+  template:
+    metadata:
+      labels:
+        app: workticket
+        component: celery-worker
+        queue: default
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: workticket
+                    component: celery-worker
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: worker
+          image: workticket-backend:1.0.0-beta.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - celery
+            - -A
+            - celery_app
+            - worker
+            - --loglevel=info
+            - -Q
+            - default
+            - -c
+            - "2"
+            - --prefetch-multiplier
+            - "1"
+            - --without-gossip
+            - --without-mingle
+            - --max-tasks-per-child
+            - "100"
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - celery -A celery_app inspect ping -d celery@$HOSTNAME 2>/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          envFrom:
+            - configMapRef:
+                name: workticket-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_URL
+            - name: REDIS_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_CACHE_URL
+            - name: REDIS_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_BROKER_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: POSTGRES_PASSWORD
+            - name: CELERY_TASK_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CELERY_TASK_SIGNING_KEY
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi

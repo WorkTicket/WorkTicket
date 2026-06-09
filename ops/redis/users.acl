@@ -1,0 +1,10 @@
+# This file must be templated/processed before use — Redis does not expand
+# %ENV_VAR% style placeholders. Example sed substitution:
+#   sed -e "s/%REDIS_ADMIN_PASSWORD%/$ADMIN/g" \
+#       -e "s/%REDIS_WORKER_PASSWORD%/$WORKER/g" \
+#       -e "s/%REDIS_CACHE_PASSWORD%/$CACHE/g" \
+#       users.acl.template > users.acl
+user default off
+user admin on >%REDIS_ADMIN_PASSWORD% ~* &* +@all
+user worker on >%REDIS_WORKER_PASSWORD% ~cache:* ~job:* ~ws:* ~spike:* ~abuse:* -@dangerous +@all ~*
+user cache on >%REDIS_CACHE_PASSWORD% ~cache:* -@all +@read +@pubsub

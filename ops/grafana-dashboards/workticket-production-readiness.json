@@ -1,0 +1,276 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "WorkTicket — Production Readiness Dashboard",
+  "description": "Post-remediation dashboard tracking all Phase 1-6 production readiness metrics. Use alongside the gate checklist.",
+  "panels": [
+    {
+      "title": "Jobs Completion Ratio (Silent Failure Detection)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(workticket_jobs_created_total[5m])",
+          "legendFormat": "Jobs Created (API)",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(workticket_jobs_completed_total[5m])",
+          "legendFormat": "Jobs Completed (AIOutput)",
+          "refId": "B"
+        },
+        {
+          "expr": "(rate(workticket_jobs_created_total[5m]) - rate(workticket_jobs_completed_total[5m])) / rate(workticket_jobs_created_total[5m])",
+          "legendFormat": "Gap Ratio",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.05},
+              {"color": "red", "value": 0.1}
+            ]
+          }
+        }
+      },
+      "options": {"alertThreshold": true}
+    },
+    {
+      "title": "Per-Queue Celery Task Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(workticket_celery_task_latency_seconds_bucket[5m])) by (le, queue))",
+          "legendFormat": "p50 - {{queue}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(workticket_celery_task_latency_seconds_bucket[5m])) by (le, queue))",
+          "legendFormat": "p95 - {{queue}}",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(workticket_celery_task_latency_seconds_bucket[5m])) by (le, queue))",
+          "legendFormat": "p99 - {{queue}}",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 60},
+              {"color": "red", "value": 120}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "WebSocket Connections & Message Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "workticket_ws_connections_total",
+          "legendFormat": "Active WS Connections",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(workticket_ws_messages_sent_total[5m])",
+          "legendFormat": "Messages Sent (rate/5m)",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(workticket_ws_send_dropped_total[5m])",
+          "legendFormat": "Messages Dropped (rate/5m)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 0}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Concurrency Counter Health",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "increase(workticket_concurrency_counter_negative_total[5m]) > 0",
+          "legendFormat": "Negative Counter Events",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {
+        "textMode": "value",
+        "colorMode": "background"
+      }
+    },
+    {
+      "title": "Beat Task Execution Freshness",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "targets": [
+        {
+          "expr": "time() - workticket_beat_task_execution_timestamp",
+          "legendFormat": "{{task}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 600},
+              {"color": "red", "value": 1800}
+            ]
+          }
+        }
+      },
+      "options": {}
+    },
+    {
+      "title": "Stripe Webhook Processing Latency",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(workticket_stripe_webhook_latency_ms_bucket[5m])) by (le))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(workticket_stripe_webhook_latency_ms_bucket[5m])) by (le))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(workticket_stripe_webhook_latency_ms_bucket[5m])) by (le))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1000},
+              {"color": "red", "value": 5000}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Read Replica Lag",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 16},
+      "targets": [
+        {
+          "expr": "workticket_read_replica_lag_seconds",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "max": 60,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 30}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Canary Deployment Status",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 16},
+      "targets": [
+        {
+          "expr": "increase(workticket_canary_promotion_total[1h])",
+          "legendFormat": "Promotions in Last Hour",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Production Readiness Score (Target: 90+)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 20},
+      "targets": [
+        {
+          "expr": "clamp_max((1 - rate(workticket_concurrency_counter_negative_total[5m])) * 100, 100)",
+          "legendFormat": "Concurrency",
+          "refId": "A"
+        },
+        {
+          "expr": "clamp_max((1 - (increase(workticket_ws_send_dropped_total[5m]) / (increase(workticket_ws_messages_sent_total[5m]) + 1))) * 100, 100)",
+          "legendFormat": "WS Stability",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 80},
+              {"color": "green", "value": 90}
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "version": 1,
+  "schemaVersion": 39,
+  "tags": ["workticket", "production-readiness", "remediation"]
+}

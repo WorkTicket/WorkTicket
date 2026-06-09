@@ -1,0 +1,39 @@
+# WorkTicket Backend Dependencies
+# All versions are pinned to exact releases for reproducible builds.
+# Dependabot is configured in .github/dependabot.yml for automated updates.
+#
+# Minimum supported Python: 3.12
+
+# -- OpenTelemetry distributed tracing --
+opentelemetry-sdk==1.27.0
+opentelemetry-api==1.27.0
+opentelemetry-exporter-otlp==1.27.0
+opentelemetry-instrumentation-fastapi==0.48b0
+opentelemetry-instrumentation-celery==0.48b0
+opentelemetry-instrumentation-sqlalchemy==0.48b0
+opentelemetry-instrumentation-redis==0.48b0
+opentelemetry-instrumentation-httpx==0.48b0
+
+fastapi==0.115.0
+starlette==0.38.6
+uvicorn[standard]==0.30.6
+sqlalchemy[asyncio]==2.0.35
+asyncpg==0.30.0
+alembic==1.14.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+redis==5.2.0
+celery==5.4.0
+httpx==0.28.0
+boto3==1.35.0
+stripe==10.12.0
+sentry-sdk[celery]==2.15.0
+python-multipart==0.0.27
+
+pyjwt==2.10.1
+cryptography==44.0.2
+Pillow==11.0.0
+python-magic==0.4.27
+reportlab==4.2.0
+posthog==7.18.0
+cachetools==5.5.0

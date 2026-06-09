@@ -1,0 +1,706 @@
+groups:
+  - name: workticket-production
+    interval: 30s
+    rules:
+
+      # Stuck Jobs
+      - alert: StuckJobsDetected
+        expr: workticket_stuck_jobs_total > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stuck jobs detected ({{ $value }})"
+          description: "Jobs in stuck states (reserved/running/queued) have been detected for more than 2 minutes."
+
+      # DLQ Growth
+      - alert: DLQEntriesGrowing
+        expr: rate(workticket_dlq_entries_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DLQ entries growing rapidly"
+          description: "More than 10 DLQ entries per hour in the last hour."
+
+      # ACU Debt
+      - alert: ACUDebtAccumulated
+        expr: workticket_acu_debt_total > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ACU debt accumulated"
+          description: "Total ACU debt across all companies exceeds 0."
+
+      # Database Pool Saturation
+      - alert: DatabasePoolSaturation
+        expr: workticket_db_pool_utilization_pct > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database pool utilization > 80%"
+          description: "Database connection pool is {{ $value }}% utilized."
+
+      - alert: DatabasePoolExhausted
+        expr: workticket_db_pool_utilization_pct > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database pool nearly exhausted"
+          description: "Database connection pool is {{ $value }}% utilized."
+
+      # Redis Availability
+      - alert: RateLimiterRedisDown
+        expr: workticket_rate_limiter_redis_available == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limiter Redis unavailable"
+          description: "Rate limiter has fallen back to local mode."
+
+      # AI Circuit Breakers
+      - alert: AILlmCircuitOpen
+        expr: workticket_ai_gateway_llm_circuit == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "LLM circuit breaker is OPEN"
+          description: "All LLM requests are being rejected."
+
+      - alert: AIWhisperCircuitOpen
+        expr: workticket_ai_gateway_whisper_circuit == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Whisper circuit breaker is OPEN"
+          description: "All audio transcription requests are being rejected."
+
+      # Notification Circuit Breakers (Phase 1.4)
+      - alert: EmailCircuitOpen
+        expr: workticket_email_circuit_open == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Email (Resend) circuit breaker is OPEN"
+          description: "Email sending is disabled — check Resend API availability."
+
+      - alert: SmsCircuitOpen
+        expr: workticket_sms_circuit_open == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SMS (Twilio) circuit breaker is OPEN"
+          description: "SMS sending is disabled — check Twilio API availability."
+
+      # Restore Test Failures
+      - alert: RestoreTestFailed
+        expr: workticket_restore_test_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Full restore test FAILED"
+          description: "The automated restore verification test failed — data recovery may be compromised."
+
+      # Backup Freshness
+      - alert: BackupStale
+        expr: time() - workticket_backup_last_success_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database backup is stale"
+          description: "Last successful backup was more than 24 hours ago."
+
+      # Stripe IP Cache
+      - alert: StripeIPCacheStale
+        expr: workticket_stripe_ip_cache_age_seconds > 7200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stripe IP cache is stale"
+          description: "Stripe IPs have not been refreshed in over 2 hours."
+
+      # Worker Down
+      - alert: CeleryWorkerDown
+        expr: up{job="celery"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery worker {{ $labels.instance }} is down"
+          description: "Worker has been unreachable for more than 2 minutes."
+
+      # --- Per-queue Celery depth alerts (P0) ---
+      - alert: CeleryQueueAiTextGrowing
+        expr: workticket_celery_queue_depth_ai_text > 20
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ai_text queue depth > 20"
+          description: "ai_text Celery queue has {{ $value }} items — check AI text processing."
+
+      - alert: CeleryQueueAiAudioGrowing
+        expr: workticket_celery_queue_depth_ai_audio > 10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ai_audio queue depth > 10"
+          description: "ai_audio Celery queue has {{ $value }} items — check AI audio processing."
+
+      - alert: CeleryQueueAiImageGrowing
+        expr: workticket_celery_queue_depth_ai_image > 10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ai_image queue depth > 10"
+          description: "ai_image Celery queue has {{ $value }} items — check AI image processing."
+
+      - alert: CeleryQueueDefaultGrowing
+        expr: workticket_celery_queue_depth_default > 20
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "default queue depth > 20"
+          description: "default Celery queue has {{ $value }} items — check job processing."
+
+      - alert: CeleryQueueBeatGrowing
+        expr: workticket_celery_queue_depth_beat > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "beat queue depth > 5"
+          description: "beat Celery queue has {{ $value }} items — beat tasks are backing up."
+
+      - alert: CeleryTaskLatencyHigh
+        expr: workticket_celery_task_latency_seconds{quantile="0.95"} > 120
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 Celery task latency > 120s"
+          description: "P95 task completion time is {{ $value }}s."
+
+      # --- Beat task execution delay alert (HIGH-5 fix) ---
+      - alert: BeatTaskExecutionDelay
+        expr: time() - workticket_beat_last_execution_timestamp{task="scan_for_stalled_ai_jobs"} > 600
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "scan_for_stalled_ai_jobs has not executed in > 10 minutes"
+          description: "Beat task scan_for_stalled_ai_jobs last ran {{ $value | humanizeDuration }} ago — beat worker may be starved."
+
+      - alert: BeatTaskCollectDebtDelay
+        expr: time() - workticket_beat_last_execution_timestamp{task="collect_billing_debt"} > 7200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "collect_billing_debt has not executed in > 2 hours"
+          description: "Billing debt collection has not run in over 2 hours — check beat worker."
+
+      # --- Backup validation alert (CRITICAL-2) ---
+      - alert: BackupValidationFailed
+        expr: workticket_backup_validation_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup integrity validation FAILED"
+          description: "The most recent backup failed pg_restore -l integrity check — investigate immediately."
+
+      # --- Unsigned task detection alert (HIGH-3) ---
+      - alert: UnsignedTaskDetected
+        expr: increase(workticket_unsigned_task_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unsigned Celery task detected"
+          description: "A Celery task was executed without a valid HMAC signature."
+
+      # --- P3-B: DLQ growth alert ---
+      - alert: DeadLetterQueueGrowing
+        expr: workticket_dlq_entries_total > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DLQ has {{ $value }} entries — investigate root cause"
+          description: "Dead letter queue contains {{ $value }} entries."
+
+      # --- P0-C: DLQ write failure alert ---
+      - alert: DeadLetterWriteFailing
+        expr: increase(workticket_dlq_write_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dead letter queue write failures detected"
+          description: "DLQ write failures in last 5 minutes — check DB health."
+
+      # --- P3-C: Billing drift alert ---
+      - alert: BillingDriftHigh
+        expr: workticket_billing_drift_pct > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Billing drift > 5% over 10 minutes"
+          description: "Cost drift is {{ $value }}% — check reconciliation."
+
+      # --- P0-D: Billing debt threshold alert ---
+      - alert: BillingDebtThreshold
+        expr: increase(workticket_billing_debt_threshold_exceeded_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Billing debt threshold exceeded"
+          description: "An account's acu_debt exceeded monthly quota — manual review needed."
+
+      # --- Phase 2: New alerts for metrics added in hardening ---
+      - alert: UnsignedTaskRejected
+        expr: increase(workticket_unsigned_task_rejected_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unsigned task rejected — HMAC key missing in production"
+          description: "A Celery task was rejected because CELERY_TASK_SIGNING_KEY is not configured."
+
+      - alert: BeatLockSkipped
+        expr: increase(workticket_beat_lock_skipped_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Beat lock skipped due to Redis unavailability"
+          description: "Beat tasks are skipping execution locks because Redis is unreachable."
+
+      - alert: WebSocketPubSubDegraded
+        expr: increase(workticket_ws_pubsub_fallback_total[5m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket PubSub falling back to DB polling"
+          description: "More than 3 PubSub fallbacks in 5 minutes — check Redis cache."
+
+      - alert: WsAuthCacheNearLimit
+        expr: workticket_ws_auth_cache_size > 900
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket auth cache near capacity ({{ $value }}/1000)"
+          description: "Auth cache is approaching its LRU maxsize — investigate potential leak."
+
+      - alert: RedisEvictionsDetected
+        expr: rate(redis_evicted_keys_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis keys being evicted"
+          description: "Redis is evicting keys — check maxmemory policy and usage."
+
+      - alert: BillingConcurrentReset
+        expr: increase(workticket_billing_concurrent_reset_skipped_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Concurrent billing reset detected and blocked"
+          description: "A concurrent billing quota reset was prevented — check beat worker concurrency."
+
+      - alert: OrphanedOutputsFound
+        expr: increase(workticket_orphaned_outputs_recovered_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Orphaned AIOutput records found and recovered"
+          description: "Orphaned AIOutput records without completed Job state were recovered."
+
+      - alert: DlqDuplicateDispatchBlocked
+        expr: increase(workticket_dlq_duplicate_dispatch_blocked_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DLQ duplicate dispatch prevented"
+          description: "SKIP LOCKED prevented duplicate DLQ entry processing."
+
+      # Celery Worker Stalled — no tasks completed in 5 minutes
+      - alert: CeleryWorkerStalled
+        expr: rate(workticket_jobs_completed_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No Celery tasks completed in 5 minutes"
+          description: "Celery workers may be stuck or deadlocked."
+
+      # DB Pool Saturation Rising — alert on trend, not level
+      - alert: DBPoolSaturationRising
+        expr: rate(workticket_db_pool_utilization_pct[5m]) > 0.1 and workticket_db_pool_utilization_pct > 70
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB pool utilization rising rapidly"
+          description: "Pool utilization is {{ $value }}% and rising — may indicate a traffic spike."
+
+      # Stripe Circuit Breaker Open
+      - alert: StripeCircuitBreakerOpen
+        expr: workticket_stripe_circuit_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Stripe circuit breaker is OPEN"
+          description: "Stripe API requests are being blocked — check Stripe availability."
+
+      # WebSocket Polling Excess — detect Redis pub/sub failure
+      - alert: WebSocketPollingHigh
+        expr: rate(workticket_ws_db_poll_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket DB polling rate high (>100/5m)"
+          description: "Redis pub/sub may have failed — all connections falling back to DB polling."
+
+      # Migrations taking too long
+      - alert: MigrationRunningLong
+        expr: time() - process_start_time_seconds{job="alembic"} > 60
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Migration running longer than 60 seconds"
+          description: "Alembic migration has been running for over a minute — may lock tables."
+
+      # Concurrency Counter Negative
+      - alert: ConcurrencyCounterNegative
+        expr: increase(workticket_concurrency_counter_negative_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Concurrency counter drifted negative"
+          description: "A concurrency counter went negative — check for release/acquire imbalance."
+
+      # AI Fallback responses detected
+      - alert: AIFallbackResponses
+        expr: increase(workticket_ai_fallback_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI fallback responses generated"
+          description: "AI processing is returning fallback responses — check AI provider health."
+
+      # --- Post-fix alerts for newly hardened metrics ---
+
+      # Broker Redis Memory >80% — early warning before OOM (fix 2.2)
+      - alert: BrokerRedisMemoryHigh
+        expr: workticket_broker_redis_memory_pct > 80
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Broker Redis memory usage > 80%"
+          description: "Broker Redis is at {{ $value }}% of maxmemory — risk of OOM write failures."
+
+      # Broker Redis Write Failures (enqueue failures)
+      - alert: BrokerRedisWriteFailures
+        expr: increase(workticket_redis_write_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Broker Redis write failures detected"
+          description: "Redis broker is rejecting writes — check memory and maxmemory-policy."
+
+      # Concurrency Acquire Failures (fail-closed, fix 1.3)
+      - alert: ConcurrencyAcquireFailures
+        expr: increase(workticket_concurrency_acquire_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Concurrency acquire failures due to Redis unavailability"
+          description: "AI processing is being blocked because the concurrency limiter cannot reach Redis."
+
+      # AI Output Dedup Hits (fix 2.7) — silent duplicate processing prevented
+      - alert: AiOutputDedupHits
+        expr: increase(workticket_ai_dedup_hit_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Duplicate AI task execution prevented by idempotency check"
+          description: "AI text/image task was skipped because output already exists."
+
+      # WebSocket Reauth Backoff Active — Redis/DB auth cache degraded (fix 2.4)
+      - alert: WsReauthDbHitsHigh
+        expr: rate(workticket_ws_reauth_db_hits[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket DB reauth rate high (>10/5m)"
+          description: "WebSocket connections are hitting the DB for re-auth — Redis auth cache may be failing."
+
+      # Worker Shutdown Forced Kills (fix 2.8) — tracked to detect grace period issues
+      - alert: WorkerForcedKillsSpiking
+        expr: increase(workticket_worker_forced_kill_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple workers force-killed during shutdown"
+          description: "More than 3 workers failed to drain in time — check shutdown grace period."
+
+      # Silent Job Failure Detection — jobs created but AIOutput never written (fix 5)
+      - alert: SilentJobFailure
+        expr: rate(workticket_jobs_created_total[5m]) - rate(workticket_jobs_completed_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI jobs created but not completed — silent failure detected"
+          description: "Jobs are being created via API but AIOutput is not being written (gap={{ $value }}). Check Celery worker health."
+
+      # WebSocket send queue droppping — sustained message loss (fix 10)
+      - alert: WebSocketSendDropping
+        expr: rate(workticket_ws_send_dropped_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket messages being dropped"
+          description: "WebSocket send queue is dropping messages due to backpressure — check client consume rates."
+
+      # Stripe webhook processing latency spike (fix 11)
+      - alert: StripeWebhookLatencyHigh
+        expr: histogram_quantile(0.95, rate(workticket_stripe_webhook_latency_ms_bucket[5m])) > 5000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stripe webhook processing latency > 5s (p95)"
+          description: "Webhook processing is slow — check Stripe API and DB performance."
+
+      # Beat task execution tracking staleness
+      - alert: BeatTaskStaleExecution
+        expr: time() - workticket_beat_task_execution_timestamp{task="reset_billing_quotas"} > 5400
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "beat task reset_billing_quotas has not executed in > 90 minutes"
+          description: "Billing quotas may not be resetting — check beat worker health."
+
+      # Database read replica lag
+      - alert: ReadReplicaLagHigh
+        expr: workticket_read_replica_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Read replica lag > 30 seconds"
+          description: "Read replica is {{ $value }}s behind primary — analytics may serve stale data."
+
+      # --- Merged from prometheus_alerts.yml ---
+
+      # C-1: Silent queue death — jobs created but not completed
+      - alert: WorkTicketDroppedTasks
+        expr: workticket_dropped_tasks_gap > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Silent queue death detected — {{ $value }} jobs created but not completed"
+          description: "The gap between jobs created and completed has persisted at {{ $value }} for over 2 minutes."
+
+      # C-1: Worker crash-loop detection
+      - alert: WorkTicketNoWorkers
+        expr: workticket_worker_crash_loops_detected == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "All Celery workers may be crash-looping"
+          description: "Worker crash-loop detection triggered. Zero workers alive with repeated crash events."
+
+      # H-9: Retry storm detection
+      - alert: WorkTicketRetryStorm
+        expr: workticket_retry_guard_active_storms > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Retry storms active — {{ $value }} tasks in storm state"
+          description: "Retry storm guard has detected {{ $value }} tasks exceeding the retry threshold."
+
+      # H-5: Beat lock contention
+      - alert: WorkTicketBeatLockContention
+        expr: rate(workticket_beat_lock_contention_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Beat lock contention — {{ $value }} conflicts/min"
+          description: "High beat lock contention may indicate too many beat replicas or slow beat task execution."
+
+      # Queue stuck — tasks unchanged for 5 minutes
+      - alert: WorkTicketQueueStuck
+        expr: workticket_queue_depth > 0 and changes(workticket_queue_depth[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue {{ $labels.queue }} stuck at {{ $value }} tasks"
+          description: "Queue {{ $labels.queue }} has {{ $value }} tasks that have not changed in 5 minutes."
+
+      # --- Merged from prometheus-alerts.yml (root) ---
+
+      # C-1: Redis broker evicting keys
+      - alert: RedisBrokerEvictingKeys
+        expr: increase(workticket_redis_evicted_keys_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis broker is evicting keys — task loss risk"
+          description: "Redis broker has evicted {{ $value }} keys in 5 minutes. Broker must use noeviction policy."
+
+      # C-2: WebSocket connection cap approaching
+      - alert: WebSocketConnectionSpike
+        expr: workticket_ws_connections_total > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WebSocket connection count"
+          description: "Active WebSocket connections: {{ $value }}. Investigate per-user connection distribution."
+
+      # H-3: Payload version mismatch during rollout
+      - alert: PayloadVersionMismatch
+        expr: increase(workticket_counters_total{name="version_mismatch_total"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Celery payload version mismatch detected"
+          description: "Tasks with incompatible payload version detected. Check deployment sequencing."
+
+      # H-5: Concurrency limiter fallback active
+      - alert: ConcurrencyLockFallbackActive
+        expr: workticket_rate_limiter_fallback_active == 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limiter fallback active"
+          description: "Rate limiter is using local fallback. Redis may be degraded."
+
+      # Phase 4: Ghost ACU reservations
+      - alert: GhostReservationsDetected
+        expr: workticket_ghost_reservations_total > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ghost ACU reservations detected"
+          description: "{{ $value }} accounts have reserved_acu without recent heartbeat."
+
+      # Phase 4: DLQ fallback file growth
+      - alert: DLQFallbackFileGrowing
+        expr: workticket_dlq_fallback_file_size_bytes > 1048576
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DLQ fallback file > 1MB"
+          description: "DLQ fallback file is {{ $value | humanize }} bytes."
+
+      # Phase 4: WebSocket disabled
+      - alert: WsDisabled
+        expr: workticket_ws_enabled == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket endpoint is disabled"
+          description: "WS_ENABLED is false — WebSocket features unavailable."
+
+      # Beat lock TTL not renewed
+      - alert: BeatLockTTLNotRenewed
+        expr: increase(workticket_beat_lock_ttl_renewed_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Beat lock TTL not being renewed"
+          description: "No beat lock TTL renewals in 5 minutes — heartbeat may be failing."
+
+      # Billing reconciliation skipped due to lock contention
+      - alert: BillingReconciliationSkipped
+        expr: increase(workticket_billing_reconciliation_skipped_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Billing reconciliation skipped"
+          description: "Billing reconciliation lock contention detected — tasks may be overlapping."
+
+      # Stripe webhook lock contention
+      - alert: WebhookLockContention
+        expr: increase(workticket_stripe_webhook_lock_contention_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stripe webhook lock contention > 10 in 5m"
+          description: "High lock contention on stripe webhook — check concurrent webhook volume."
+
+      # Celery event loop corruption
+      - alert: CeleryEventLoopRecreated
+        expr: increase(workticket_celery_event_loop_recreated_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery event loop recreated"
+          description: "Event loop was corrupted and recreated — investigate root cause."
+
+      # Silent job failure (Phase 3 C-1)
+      - alert: SilentJobProcessingFailure
+        expr: rate(workticket_jobs_created_total[5m]) - rate(workticket_jobs_completed_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Jobs created but not completed — potential silent failure"
+          description: "Job creation rate exceeds completion rate over 5 minutes."

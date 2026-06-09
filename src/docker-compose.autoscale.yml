@@ -1,0 +1,102 @@
+# Worker Autoscaling Configuration
+# H-3 FIX: Default worker replicas set to 3 for AI queues
+# with configurable concurrency via environment variables.
+#
+# Celery's built-in --autoscale dynamically adjusts child processes
+# per worker: max_concurrency,min_concurrency
+#   e.g., --autoscale=4,2 means: grow to 4 workers, shrink to 2
+#
+# For horizontal scaling (Docker Swarm / K8s), use the Python autoscaler:
+#   python ops/scripts/celery_autoscaler.py --interval 30
+
+services:
+  celery-worker-text:
+    deploy:
+      replicas: ${CELERY_TEXT_REPLICAS:-3}
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+        reservations:
+          cpus: '1'
+          memory: 1g
+    environment:
+      - CELERYD_CONCURRENCY=${CELERY_TEXT_CONCURRENCY:-3}
+      - CELERYD_AUTOSCALE=${CELERY_TEXT_AUTOSCALE:-6,2}
+      - CELERYD_MAX_TASKS_PER_CHILD=50
+      - CELERYD_PREFETCH_MULTIPLIER=1
+    healthcheck:
+      test: ["CMD", "celery", "-A", "celery_app", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  celery-worker-image:
+    deploy:
+      replicas: ${CELERY_IMAGE_REPLICAS:-3}
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+        reservations:
+          cpus: '1'
+          memory: 1g
+    environment:
+      - CELERYD_CONCURRENCY=${CELERY_IMAGE_CONCURRENCY:-3}
+      - CELERYD_AUTOSCALE=${CELERY_IMAGE_AUTOSCALE:-4,2}
+      - CELERYD_MAX_TASKS_PER_CHILD=50
+      - CELERYD_PREFETCH_MULTIPLIER=1
+
+  celery-worker-audio:
+    deploy:
+      replicas: ${CELERY_AUDIO_REPLICAS:-3}
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+        reservations:
+          cpus: '1'
+          memory: 1g
+    environment:
+      - CELERYD_CONCURRENCY=${CELERY_AUDIO_CONCURRENCY:-3}
+      - CELERYD_AUTOSCALE=${CELERY_AUDIO_AUTOSCALE:-4,2}
+      - CELERYD_MAX_TASKS_PER_CHILD=50
+      - CELERYD_PREFETCH_MULTIPLIER=1
+
+  celery-worker-default:
+    deploy:
+      replicas: ${CELERY_DEFAULT_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1g
+        reservations:
+          cpus: '0.5'
+          memory: 512m
+    environment:
+      - CELERYD_CONCURRENCY=${CELERY_DEFAULT_CONCURRENCY:-2}
+      - CELERYD_AUTOSCALE=${CELERY_DEFAULT_AUTOSCALE:-4,1}
+      - CELERYD_MAX_TASKS_PER_CHILD=100
+      - CELERYD_PREFETCH_MULTIPLIER=1
+
+# Autoscaling notes:
+# 1. Celery Built-in Autoscale (--autoscale=max,min):
+#    Dynamic per-worker child process scaling based on queue load.
+#    Set via CELERYD_AUTOSCALE env var (e.g., "6,2" = max 6, min 2).
+#
+# 2. Horizontal Pod Autoscaler (Kubernetes):
+#    HPA manifests at ops/k8s/hpa-celery.yaml for K8s deployments.
+#    Metrics: CPU >70% OR queue depth > threshold.
+#
+# 3. Docker Swarm Service Scale:
+#    Use the Python autoscaler sidecar:
+#      python ops/scripts/celery_autoscaler.py --interval 30
+#    Or manually:
+#      docker service scale workticket_celery-worker-text=5
+#
+# 4. Environment Variables:
+#    CELERY_TEXT_REPLICAS      — Docker Swarm service replicas for ai_text
+#    CELERY_TEXT_AUTOSCALE     — Celery autoscale for ai_text (default: 6,2)
+#    CELERY_TEXT_CONCURRENCY   — Celery concurrency for ai_text (default: 3)
+#    CELERY_TEXT_MIN_REPLICAS  — K8s HPA min replicas for ai_text (default: 2)
+#    CELERY_TEXT_MAX_REPLICAS  — K8s HPA max replicas for ai_text (default: 10)

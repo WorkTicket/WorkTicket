@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.env
+.git
+.gitignore
+*.md
+node_modules
+.vscode
+.venv
+venv
+tests/
+chaos/
+.DS_Store
+Thumbs.db

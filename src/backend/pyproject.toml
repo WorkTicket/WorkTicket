@@ -1,0 +1,138 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "workticket-backend"
+version = "1.0.0-beta.1"
+description = "WorkTicket Backend API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "starlette>=0.37.2,<0.39.0",
+    "uvicorn[standard]==0.30.6",
+    "sqlalchemy[asyncio]==2.0.35",
+    "asyncpg==0.30.0",
+    "alembic==1.14.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "redis==5.2.0",
+    "celery==5.4.0",
+    "httpx==0.28.0",
+    "boto3==1.35.0",
+    "stripe==10.12.0",
+    "sentry-sdk[celery]==2.15.0",
+    "python-multipart>=0.0.27",
+    "pyjwt==2.10.1",
+    "cryptography==44.0.2",
+    "Pillow==11.0.0",
+    "python-magic==0.4.27",
+    "reportlab==4.2.0",
+    "opentelemetry-sdk==1.27.0",
+    "opentelemetry-api==1.27.0",
+    "opentelemetry-exporter-otlp==1.27.0",
+    "opentelemetry-instrumentation-fastapi==0.48b0",
+    "opentelemetry-instrumentation-celery==0.48b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.48b0",
+    "opentelemetry-instrumentation-redis==0.48b0",
+    "opentelemetry-instrumentation-httpx==0.48b0",
+    "cachetools==5.5.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.28",
+    "pytest-cov>=5.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "W",     # pycodestyle warnings
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "UP",    # pyupgrade
+    "SIM",   # flake8-simplify
+    "C4",    # flake8-comprehensions
+    "T20",   # flake8-print (excluded from scripts)
+    "RUF",   # ruff-specific rules
+    "PERF",  # perflint
+    "PIE",   # flake8-pie
+    "N",     # pep8-naming (excluded from tests)
+]
+ignore = ["E501", "B008"]
+exclude = ["alembic/versions/", ".venv/", "venv/"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["N", "RUF001", "RUF012", "RUF059", "RUF013", "RUF100", "PERF", "PIE"]
+"tests/**/*.py" = ["N", "RUF001", "RUF012", "RUF059", "RUF013", "RUF100", "PERF", "PIE"]
+"tasks/**/*.py" = ["N", "RUF100"]
+"scripts/**/*.py" = ["T201", "N"]
+"celery_config/**/*.py" = ["N"]
+"app/ai/audit.py" = ["N"]
+"tests/test_websocket.py" = ["B017"]
+"scripts/audit_ai_sanitization.py" = ["SIM102"]
+"tests/release_gates/gate_c_production_launch_checklist.py" = ["T201"]
+
+[tool.mypy]
+strict = false
+ignore_missing_imports = true
+exclude = ["__pycache__/", ".venv/", ".pytest_cache/", ".ruff_cache/", "scripts/", "tasks/"]
+check_untyped_defs = true
+disallow_untyped_defs = false
+warn_return_any = true
+warn_unused_ignores = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["sqlalchemy.*", "sqlalchemy.ext.*", "sqlalchemy.orm.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "kombu.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["stripe.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "celery_config.*"]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+markers = [
+    "sandbox: tests that require live provider sandbox API credentials (excluded from CI by default)",
+    "gate_a: Release Gate A — migration correctness via mock providers",
+    "gate_b: Release Gate B — live sandbox API validation (requires credentials)",
+    "gate_c: Release Gate C — production launch certification (go/no-go checklist)",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*", "alembic/*", "*/migrations/*", "scripts/*"]
+
+[tool.coverage.report]
+fail_under = 70
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.bandit]
+skips = ["B101", "B603"]
+exclude_dirs = ["tests", "alembic", "scripts"]

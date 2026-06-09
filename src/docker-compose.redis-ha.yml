@@ -1,0 +1,201 @@
+# =============================================================================
+# Redis High-Availability — Docker Compose Override
+# =============================================================================
+# Deploy alongside docker-compose.yml for Redis Sentinel HA:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.redis-ha.yml up -d
+#
+# This converts the single-node Redis instances into a Sentinel-monitored
+# cluster with automatic failover. Requires 3 Sentinel nodes for quorum.
+#
+# Environment variables required:
+#   REDIS_PASSWORD          — strong Redis password (shared across all nodes)
+#   REDIS_SENTINEL_PASSWORD — strong Sentinel password (can differ from Redis)
+#
+# Connection URLs after deployment:
+#   Broker: sentinel://:<password>@sentinel-1:26379;sentinel-2:26379;sentinel-3:26379/redis-broker
+#   Cache:  sentinel://:<password>@sentinel-1:26379;sentinel-2:26379;sentinel-3:26379/redis-cache
+# =============================================================================
+
+services:
+  # Disable the standalone redis-broker and redis-cache from the base compose
+  # when using Sentinel HA (Sentinel manages its own broker/cache instances).
+  redis-broker:
+    profiles: ["sentinel"]
+
+  redis-cache:
+    profiles: ["sentinel"]
+
+  # --- Redis Broker Cluster ---
+  # NOTE: Broker Redis MUST use noeviction to prevent silent task loss.
+  # The base docker-compose.yml correctly sets noeviction for the
+  # standalone broker. This override inherits that setting — do NOT
+  # change to allkeys-lru (which would silently evict Celery messages).
+  redis-broker-ha:
+    image: redis:7-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    volumes:
+      - redis-broker-data:/data
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --maxmemory-policy noeviction
+      --maxmemory 1073741824
+      --appendonly yes
+
+  redis-broker-replica-1:
+    image: redis:7-alpine
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --replicaof redis-broker-ha 6379
+      --maxmemory-policy noeviction
+      --maxmemory 1073741824
+      --appendonly yes
+    depends_on:
+      - redis-broker-ha
+
+  redis-broker-replica-2:
+    image: redis:7-alpine
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --replicaof redis-broker-ha 6379
+      --maxmemory-policy noeviction
+      --maxmemory 1073741824
+      --appendonly yes
+    depends_on:
+      - redis-broker-ha
+
+  # --- Redis Cache Cluster ---
+  redis-cache-ha:
+    image: redis:7-alpine
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    volumes:
+      - redis-cache-data:/data
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --maxmemory-policy allkeys-lru
+      --maxmemory 209715200
+      --appendonly yes
+
+  redis-cache-replica-1:
+    image: redis:7-alpine
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --replicaof redis-cache-ha 6379
+      --maxmemory-policy allkeys-lru
+      --maxmemory 209715200
+      --appendonly yes
+    depends_on:
+      - redis-cache-ha
+
+  redis-cache-replica-2:
+    image: redis:7-alpine
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks:
+      - backend-redis
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --masterauth "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      --replicaof redis-cache-ha 6379
+      --maxmemory-policy allkeys-lru
+      --maxmemory 209715200
+      --appendonly yes
+    depends_on:
+      - redis-cache-ha
+
+  # --- Sentinel Nodes (3 for quorum) ---
+  sentinel-1:
+    image: redis:7-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 64m
+    mem_reservation: 32m
+    networks:
+      - backend-redis
+    ports:
+      - "127.0.0.1:26379:26379"
+    command: >
+      sh -c "
+      echo 'sentinel monitor redis-broker redis-broker-ha 6379 2' > /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-broker ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-broker 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-broker 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-broker 1' >> /etc/sentinel.conf &&
+      echo 'sentinel monitor redis-cache redis-cache-ha 6379 2' >> /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-cache ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-cache 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-cache 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-cache 1' >> /etc/sentinel.conf &&
+      exec redis-sentinel /etc/sentinel.conf
+      "
+
+  sentinel-2:
+    image: redis:7-alpine
+    mem_limit: 64m
+    mem_reservation: 32m
+    networks:
+      - backend-redis
+    command: >
+      sh -c "
+      echo 'sentinel monitor redis-broker redis-broker-ha 6379 2' > /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-broker ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-broker 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-broker 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-broker 1' >> /etc/sentinel.conf &&
+      echo 'sentinel monitor redis-cache redis-cache-ha 6379 2' >> /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-cache ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-cache 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-cache 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-cache 1' >> /etc/sentinel.conf &&
+      exec redis-sentinel /etc/sentinel.conf
+      "
+
+  sentinel-3:
+    image: redis:7-alpine
+    mem_limit: 64m
+    mem_reservation: 32m
+    networks:
+      - backend-redis
+    command: >
+      sh -c "
+      echo 'sentinel monitor redis-broker redis-broker-ha 6379 2' > /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-broker ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-broker 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-broker 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-broker 1' >> /etc/sentinel.conf &&
+      echo 'sentinel monitor redis-cache redis-cache-ha 6379 2' >> /etc/sentinel.conf &&
+      echo 'sentinel auth-pass redis-cache ${REDIS_SENTINEL_PASSWORD:-${REDIS_PASSWORD:?REDIS_PASSWORD is required}}' >> /etc/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds redis-cache 5000' >> /etc/sentinel.conf &&
+      echo 'sentinel failover-timeout redis-cache 10000' >> /etc/sentinel.conf &&
+      echo 'sentinel parallel-syncs redis-cache 1' >> /etc/sentinel.conf &&
+      exec redis-sentinel /etc/sentinel.conf
+      "

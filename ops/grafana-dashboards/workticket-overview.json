@@ -1,0 +1,190 @@
+{
+  "title": "WorkTicket Production Overview",
+  "uid": "workticket-overview",
+  "panels": [
+    {
+      "title": "Broker Redis Memory",
+      "type": "gauge",
+      "targets": [{"expr": "workticket_broker_redis_memory_pct", "legendFormat": "pct"}],
+      "unit": "percent",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 80}, {"color": "red", "value": 95}]},
+      "description": "Broker Redis memory usage as % of maxmemory"
+    },
+    {
+      "title": "Redis Write Failures",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_redis_write_failures_total[5m])", "legendFormat": "failures"}],
+      "description": "Redis write failures in last 5 minutes (OOM detection)"
+    },
+    {
+      "title": "Stuck Jobs by State",
+      "type": "stat",
+      "targets": [{"expr": "workticket_stuck_jobs_total", "legendFormat": "{{state}}"}],
+      "description": "Jobs stuck in reserved/running/queued states"
+    },
+    {
+      "title": "DLQ Entries",
+      "type": "stat",
+      "targets": [{"expr": "workticket_dlq_entries_total", "legendFormat": "total"}],
+      "description": "Total dead letter queue entries"
+    },
+    {
+      "title": "DLQ Write Failures",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_dlq_write_failures_total[5m])", "legendFormat": "failures"}],
+      "description": "DLQ DB write failures — entries may be lost"
+    },
+    {
+      "title": "DLQ Retry Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_dlq_retry_attempts_total[5m])", "legendFormat": "{{outcome}}"}],
+      "description": "DLQ retry attempts per minute by outcome"
+    },
+    {
+      "title": "ACU Debt",
+      "type": "stat",
+      "targets": [{"expr": "workticket_acu_debt_total", "legendFormat": "total"}],
+      "description": "Total accumulated ACU debt"
+    },
+    {
+      "title": "Database Pool Utilization",
+      "type": "gauge",
+      "targets": [{"expr": "workticket_db_pool_utilization_pct", "legendFormat": "utilization"}],
+      "unit": "percent",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 80}, {"color": "red", "value": 95}]}
+    },
+    {
+      "title": "Concurrency Acquire Failures",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_concurrency_acquire_failures_total[5m])", "legendFormat": "failures"}],
+      "description": "AI processing blocked because concurrency limiter cannot reach Redis"
+    },
+    {
+      "title": "Concurrency Counter Negative",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_concurrency_counter_negative_total[1h])", "legendFormat": "negatives"}],
+      "description": "Concurrency counter drift events in last hour"
+    },
+    {
+      "title": "Redis Availability",
+      "type": "stat",
+      "targets": [{"expr": "workticket_rate_limiter_redis_available", "legendFormat": "available"}],
+      "description": "1 = available, 0 = unavailable"
+    },
+    {
+      "title": "WebSocket Connections",
+      "type": "graph",
+      "targets": [{"expr": "workticket_ws_connections_total", "legendFormat": "connections"}],
+      "description": "Active WebSocket connections over time"
+    },
+    {
+      "title": "Celery Queue Depth",
+      "type": "graph",
+      "targets": [
+        {"expr": "workticket_celery_queue_depth_default", "legendFormat": "default"},
+        {"expr": "workticket_celery_queue_depth_ai_text", "legendFormat": "ai_text"},
+        {"expr": "workticket_celery_queue_depth_ai_audio", "legendFormat": "ai_audio"},
+        {"expr": "workticket_celery_queue_depth_ai_image", "legendFormat": "ai_image"}
+      ],
+      "description": "Celery task queue depths"
+    },
+    {
+      "title": "Task Retry Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_dlq_retry_attempts_total[5m])", "legendFormat": "retries"}],
+      "description": "Task retry rate"
+    },
+    {
+      "title": "Jobs Completed Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_jobs_completed_total[5m])", "legendFormat": "completed"}],
+      "description": "Jobs completed per second — zero = stuck workers"
+    },
+    {
+      "title": "Worker Forced Kills",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_worker_forced_kill_total[24h])", "legendFormat": "{{worker}}"}],
+      "description": "Workers that did not drain in time during shutdown"
+    },
+    {
+      "title": "AI Dedup Hits",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_ai_dedup_hit_total[24h])", "legendFormat": "hits"}],
+      "description": "Duplicate AI task executions prevented (fix 2.7)"
+    },
+    {
+      "title": "WS Reauth DB Hits",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_reauth_db_hits[5m])", "legendFormat": "db_hits"}],
+      "description": "WebSocket DB reauth rate — should be low during normal operation"
+    },
+    {
+      "title": "Backup Freshness",
+      "type": "stat",
+      "targets": [{"expr": "time() - workticket_backup_last_success_timestamp", "legendFormat": "age"}],
+      "unit": "seconds",
+      "description": "Seconds since last successful backup"
+    },
+    {
+      "title": "Stripe IP Cache Age",
+      "type": "gauge",
+      "targets": [{"expr": "workticket_stripe_ip_cache_age_seconds", "legendFormat": "age"}],
+      "unit": "seconds",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 3600}, {"color": "red", "value": 7200}]}
+    },
+    {
+      "title": "AI Circuit Breakers",
+      "type": "stat",
+      "targets": [
+        {"expr": "workticket_ai_gateway_llm_circuit", "legendFormat": "LLM"},
+        {"expr": "workticket_ai_gateway_whisper_circuit", "legendFormat": "Whisper"},
+        {"expr": "workticket_stripe_circuit_state", "legendFormat": "Stripe"}
+      ],
+      "description": "1 = open, 0 = closed"
+    },
+    {
+      "title": "WS Auth Cache Size",
+      "type": "graph",
+      "targets": [{"expr": "workticket_ws_auth_cache_size", "legendFormat": "entries"}],
+      "description": "WebSocket auth cache entry count (LRU max=1000)"
+    },
+    {
+      "title": "WS PubSub Fallback Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_pubsub_fallback_total[5m])", "legendFormat": "fallbacks"}],
+      "description": "WebSocket PubSub fallback rate to DB polling"
+    },
+    {
+      "title": "Beat Lock Skips",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_beat_lock_skipped_total[5m])", "legendFormat": "{{task}}"}],
+      "description": "Beat lock skip rate by task (Redis unavailable)"
+    },
+    {
+      "title": "Billing Drift",
+      "type": "graph",
+      "targets": [{"expr": "workticket_billing_drift_pct", "legendFormat": "drift_pct"}],
+      "description": "Billing cost drift percentage"
+    },
+    {
+      "title": "Orphaned Outputs Recovered",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_orphaned_outputs_recovered_total[24h])", "legendFormat": "recovered"}],
+      "description": "Orphaned AIOutput records recovered in last 24h"
+    },
+    {
+      "title": "AI Fallback Responses",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ai_fallback_total[5m])", "legendFormat": "fallbacks"}],
+      "description": "AI fallback response rate (AI provider unavailable)"
+    },
+    {
+      "title": "PgBouncer Idle-in-Txn",
+      "type": "stat",
+      "targets": [{"expr": "workticket_pgbouncer_idle_in_txn", "legendFormat": "connections"}],
+      "description": "PgBouncer connections idle in transaction"
+    }
+  ],
+  "rows": [],
+  "time": {"from": "now-6h", "to": "now"}
+}

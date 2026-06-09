@@ -1,0 +1,230 @@
+# WorkTicket Network Policies
+# =============================================================================
+# Enforces least-privilege network access between pods and external services.
+# Default posture: deny-all ingress and deny-all egress, with explicit allows.
+# =============================================================================
+
+---
+# Allow API pods to receive traffic from ingress controller only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-ingress-only
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+      component: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+
+---
+# Deny all other ingress traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-other-ingress
+  namespace: workticket
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress: []
+
+---
+# Allow pods to reach DNS (CoreDNS) for service discovery
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: workticket
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Deny all other egress (explicit allow-list approach)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-other-egress
+  namespace: workticket
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress: []
+
+---
+# Allow API and workers to reach external PostgreSQL (via Egress)
+# NOTE: Replace EXTERNAL_DB_CIDR with your actual database CIDR range
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: workticket
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6432
+
+---
+# Allow API and workers to reach external Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: workticket
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 6379
+
+---
+# Allow workers to reach Ollama (AI service)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ollama-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ollama
+      ports:
+        - protocol: TCP
+          port: 11434
+
+---
+# Allow workers to reach ClamAV (malware scanning)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-clamav-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: clamav
+      ports:
+        - protocol: TCP
+          port: 3310
+
+---
+# Allow workers to reach Whisper service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-whisper-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: whisper
+      ports:
+        - protocol: TCP
+          port: 8001
+
+---
+# Allow API to reach Stripe, Clerk, Resend, Sentry (external HTTPS)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-https-egress
+  namespace: workticket
+spec:
+  podSelector:
+    matchLabels:
+      app: workticket
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443

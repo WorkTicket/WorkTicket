@@ -1,0 +1,19 @@
+---
+description: WorkTicket v1 is manual-first — AI disabled until funded and approved
+globs:
+  - src/web-dashboard/**
+  - src/mobile-app/**
+  - src/marketing-website/**
+alwaysApply: true
+---
+
+# Manual-first product rule (locked)
+
+WorkTicket v1 is a **manual SaaS platform**. AI is NOT part of v1.
+
+- `AI_FEATURES_ENABLED` is `false` in product-rules — do not flip without explicit approval
+- Client apps must NOT call `/ai/*` endpoints or show "Enable AI", "beta", "Process with AI", or "AI-assisted"
+- Use only: **Coming Soon**, **Requires Advanced Plan (Future Release)**, **Not available in current version**
+- Use `FutureFeature` component for placeholders; see `src/docs/PRODUCT_RULES.md`
+
+Marketing: say "optional enhancements planned for future updates" — never "AI-powered".
