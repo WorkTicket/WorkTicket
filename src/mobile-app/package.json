@@ -59,7 +59,7 @@
     "eslint": "^9.0.0",
     "eslint-config-expo": "~56.0.4",
     "react-test-renderer": "18.3.1",
-    "tailwindcss": "^3.4.0",
+    "tailwindcss": "^4.3.0",
     "typescript": "~5.5.0",
     "vitest": "^4.1.8"
   },
