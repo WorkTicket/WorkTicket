@@ -1,0 +1,264 @@
+{
+  "title": "WorkTicket SLI / SLO Dashboard",
+  "uid": "workticket-slos",
+  "panels": [
+    {
+      "title": "SLO: API Availability (target 99.9%)",
+      "type": "stat",
+      "targets": [{"expr": "sum(rate(workticket_http_request_duration_seconds_count{status=~\"5..\"}[5m])) / sum(rate(workticket_http_request_duration_seconds_count[5m])) * 100", "legendFormat": "error_pct"}],
+      "unit": "percent",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 1}]},
+      "description": "5xx rate over 5m — must stay below 0.1% for 99.9% availability"
+    },
+    {
+      "title": "SLO: Queue Freshness (target 95% within 60s)",
+      "type": "stat",
+      "targets": [{"expr": "workticket_celery_task_latency_seconds{quantile=\"0.95\"}", "legendFormat": "p95"}],
+      "unit": "seconds",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 45}, {"color": "red", "value": 60}]},
+      "description": "P95 task processing latency — 95% of tasks should complete within 60s"
+    },
+    {
+      "title": "SLO: Webhook Processing (target 99.9% within 10s)",
+      "type": "stat",
+      "targets": [{"expr": "workticket_billing_reconciliation_duration_ms{quantile=\"0.999\"} / 1000", "legendFormat": "p999"}],
+      "unit": "seconds",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 5}, {"color": "red", "value": 10}]},
+      "description": "P999 webhook/billing processing latency"
+    },
+    {
+      "title": "SLO: AI Job Completion (non-fallback target 95%)",
+      "type": "stat",
+      "targets": [{"expr": "1 - (rate(workticket_ai_fallback_total[5m]) / rate(workticket_jobs_completed_total[5m]))", "legendFormat": "non_fallback_rate"}],
+      "unit": "percentunit",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 0.9}, {"color": "green", "value": 0.95}]},
+      "description": "Fraction of completed jobs that did NOT use AI fallback"
+    },
+    {
+      "title": "API: Request Rate",
+      "type": "graph",
+      "targets": [{"expr": "sum(rate(workticket_http_request_duration_seconds_count[5m]))", "legendFormat": "rps"}],
+      "description": "Requests per second (all endpoints)"
+    },
+    {
+      "title": "API: Error Rate by Status",
+      "type": "graph",
+      "targets": [
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_count{status=~\"4..\"}[5m]))", "legendFormat": "4xx"},
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_count{status=~\"5..\"}[5m]))", "legendFormat": "5xx"},
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_count{status=~\"2..\"}[5m]))", "legendFormat": "2xx"}
+      ],
+      "description": "HTTP error rate by status class"
+    },
+    {
+      "title": "API: Latency Percentiles",
+      "type": "graph",
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(workticket_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.95, sum(rate(workticket_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, sum(rate(workticket_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99"}
+      ],
+      "unit": "seconds",
+      "description": "Request latency percentiles"
+    },
+    {
+      "title": "Queue: Depth per Queue",
+      "type": "graph",
+      "targets": [
+        {"expr": "workticket_queue_depth{queue=\"default\"}", "legendFormat": "default"},
+        {"expr": "workticket_queue_depth{queue=\"ai_text\"}", "legendFormat": "ai_text"},
+        {"expr": "workticket_queue_depth{queue=\"ai_audio\"}", "legendFormat": "ai_audio"},
+        {"expr": "workticket_queue_depth{queue=\"ai_image\"}", "legendFormat": "ai_image"},
+        {"expr": "workticket_queue_depth{queue=\"beat\"}", "legendFormat": "beat"}
+      ],
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 200}, {"color": "red", "value": 400}]},
+      "description": "Current task queue depths"
+    },
+    {
+      "title": "Queue: Active Workers per Queue",
+      "type": "graph",
+      "targets": [{"expr": "workticket_celery_worker_active", "legendFormat": "{{queue}}"}],
+      "description": "Workers currently processing tasks"
+    },
+    {
+      "title": "Queue: Task Completion Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_jobs_completed_total[5m])", "legendFormat": "completions_per_sec"}],
+      "description": "Task completion rate"
+    },
+    {
+      "title": "DB: Connection Pool Utilization",
+      "type": "gauge",
+      "targets": [{"expr": "workticket_db_pool_utilization", "legendFormat": "utilization"}],
+      "unit": "percentunit",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.85}]},
+      "description": "Database connection pool utilization"
+    },
+    {
+      "title": "DB: PgBouncer Queue Depth",
+      "type": "stat",
+      "targets": [{"expr": "workticket_pgbouncer_queue_depth", "legendFormat": "queued"}],
+      "description": "PgBouncer client connections waiting for a server connection"
+    },
+    {
+      "title": "DB: P99 Query Latency",
+      "type": "gauge",
+      "targets": [{"expr": "workticket_db_p99_latency_ms", "legendFormat": "p99_ms"}],
+      "unit": "ms",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 200}, {"color": "red", "value": 500}]},
+      "description": "P99 database query latency"
+    },
+    {
+      "title": "DB: Migration Duration",
+      "type": "stat",
+      "targets": [{"expr": "workticket_migration_duration_seconds", "legendFormat": "duration_s"}],
+      "unit": "seconds",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 30}, {"color": "red", "value": 60}]},
+      "description": "Duration of last migration execution"
+    },
+    {
+      "title": "Redis: Memory Usage",
+      "type": "gauge",
+      "targets": [{"expr": "redis_memory_used_bytes / redis_memory_max_bytes * 100", "legendFormat": "pct"}],
+      "unit": "percent",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 80}, {"color": "red", "value": 95}]},
+      "description": "Redis memory usage percentage"
+    },
+    {
+      "title": "Redis: Eviction Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(redis_keyspace_evicted_total[5m])", "legendFormat": "evictions_per_sec"}],
+      "description": "Redis key eviction rate"
+    },
+    {
+      "title": "AI: Job Completion Rate by State",
+      "type": "graph",
+      "targets": [
+        {"expr": "rate(workticket_jobs_completed_total[5m])", "legendFormat": "completed"},
+        {"expr": "rate(workticket_stuck_jobs_total[5m])", "legendFormat": "stuck"}
+      ],
+      "description": "AI job completion vs stuck rate"
+    },
+    {
+      "title": "AI: Fallback Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ai_fallback_total[5m])", "legendFormat": "fallbacks_per_sec"}],
+      "description": "AI fallback response rate"
+    },
+    {
+      "title": "AI: Circuit Breaker States",
+      "type": "stat",
+      "targets": [
+        {"expr": "workticket_stripe_circuit_state{state=\"open\"}", "legendFormat": "Stripe Open"},
+        {"expr": "workticket_ai_gateway_llm_circuit", "legendFormat": "LLM Open"},
+        {"expr": "workticket_ai_gateway_whisper_circuit", "legendFormat": "Whisper Open"}
+      ],
+      "description": "Circuit breaker states (1 = open)"
+    },
+    {
+      "title": "AI: Concurrency Counter Anomalies",
+      "type": "stat",
+      "targets": [{"expr": "increase(workticket_concurrency_counter_negative_total[5m])", "legendFormat": "negative_drift"}],
+      "description": "Concurrency counter underflow events (should be 0)"
+    },
+    {
+      "title": "Billing: Webhook Processing Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_billing_reconciliation_duration_ms_count[5m])", "legendFormat": "webhooks_per_sec"}],
+      "description": "Stripe webhook / billing reconciliation rate"
+    },
+    {
+      "title": "Billing: DLQ Entries",
+      "type": "stat",
+      "targets": [{"expr": "workticket_dlq_entries", "legendFormat": "dlq_count"}],
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 5}, {"color": "red", "value": 15}]},
+      "description": "Current dead letter queue count"
+    },
+    {
+      "title": "Billing: Drift Percentage",
+      "type": "graph",
+      "targets": [{"expr": "workticket_billing_drift_abs", "legendFormat": "drift_usd"}],
+      "unit": "currencyUSD",
+      "description": "Cumulative absolute billing drift in USD"
+    },
+    {
+      "title": "WS: Active Connections (Distributed)",
+      "type": "graph",
+      "targets": [
+        {"expr": "workticket_ws_connections_total", "legendFormat": "connections"}
+      ],
+      "description": "Active WebSocket connections across all replicas"
+    },
+    {
+      "title": "WS: Message Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_messages_sent_total[5m])", "legendFormat": "msgs_per_sec"}],
+      "description": "WebSocket messages sent per second"
+    },
+    {
+      "title": "WS: DB Polling Rate (PubSub Fallback)",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_db_poll_total[5m])", "legendFormat": "polls_per_sec"}],
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 10}, {"color": "red", "value": 100}]},
+      "description": "DB polling rate — high values indicate Redis PubSub failure"
+    },
+    {
+      "title": "WS: Dropped Messages",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_dropped_messages_total[5m])", "legendFormat": "dropped_per_sec"}],
+      "description": "WebSocket messages dropped by backpressure"
+    },
+    {
+      "title": "WS: Reconnect Rate",
+      "type": "graph",
+      "targets": [{"expr": "rate(workticket_ws_accept_throttled_total[5m])", "legendFormat": "throttled_per_sec"}],
+      "description": "Throttled WebSocket reconnects (reconnect storm indicator)"
+    },
+    {
+      "title": "Latency: By Endpoint Class",
+      "type": "graph",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(workticket_http_request_duration_seconds_bucket{endpoint_class=\"critical\"}[5m])) by (le))", "legendFormat": "critical P95"},
+        {"expr": "histogram_quantile(0.95, sum(rate(workticket_http_request_duration_seconds_bucket{endpoint_class=\"normal\"}[5m])) by (le))", "legendFormat": "normal P95"},
+        {"expr": "histogram_quantile(0.95, sum(rate(workticket_http_request_duration_seconds_bucket{endpoint_class=\"report\"}[5m])) by (le))", "legendFormat": "report P95"}
+      ],
+      "unit": "seconds",
+      "description": "P95 latency broken down by endpoint criticality tier (critical <200ms, normal <1s, report <5s)"
+    },
+    {
+      "title": "Slow Query Count",
+      "type": "graph",
+      "targets": [
+        {"expr": "rate(pg_stat_statements_mean_time_seconds{quantile=\"0.99\"}[5m])", "legendFormat": "p99_mean_s"},
+        {"expr": "rate(pg_stat_statements_mean_time_seconds{quantile=\"0.95\"}[5m])", "legendFormat": "p95_mean_s"}
+      ],
+      "unit": "seconds",
+      "description": "Database query latency from pg_stat_statements. >500ms logged, >2s alerted.",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 0.5}, {"color": "red", "value": 2}]}
+    },
+    {
+      "title": "Latency Budget",
+      "type": "graph",
+      "targets": [
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_bucket{le=\"0.2\", endpoint_class=\"critical\"}[5m])) / sum(rate(workticket_http_request_duration_seconds_count{endpoint_class=\"critical\"}[5m]))", "legendFormat": "critical <200ms"},
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_bucket{le=\"1.0\", endpoint_class=\"normal\"}[5m])) / sum(rate(workticket_http_request_duration_seconds_count{endpoint_class=\"normal\"}[5m]))", "legendFormat": "normal <1s"},
+        {"expr": "sum(rate(workticket_http_request_duration_seconds_bucket{le=\"5.0\", endpoint_class=\"report\"}[5m])) / sum(rate(workticket_http_request_duration_seconds_count{endpoint_class=\"report\"}[5m]))", "legendFormat": "report <5s"}
+      ],
+      "unit": "percentunit",
+      "description": "Fraction of requests meeting latency targets per endpoint class. <1.0 = budget exhausted.",
+      "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 0.95}, {"color": "green", "value": 0.99}]}
+    }
+  ],
+  "rows": [
+    {"title": "SLI / SLO Targets", "panels": [0, 1, 2, 3]},
+    {"title": "API Health", "panels": [4, 5, 6, 28, 29, 30]},
+    {"title": "Queue Health", "panels": [7, 8, 9]},
+    {"title": "Database", "panels": [10, 11, 12, 13]},
+    {"title": "Redis", "panels": [14, 15]},
+    {"title": "AI Pipeline", "panels": [16, 17, 18, 19]},
+    {"title": "Billing", "panels": [20, 21, 22]},
+    {"title": "WebSocket", "panels": [23, 24, 25, 26, 27]}
+  ],
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s"
+}

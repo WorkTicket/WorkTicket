@@ -1,0 +1,17 @@
+.env
+.env.*
+__pycache__/
+*.py[cod]
+*.egg-info/
+.git/
+.gitignore
+.dockerignore
+README.md
+tests/
+chaos/
+.venv/
+.DS_Store
+Thumbs.db
+*.log
+*.db
+*.sqlite3

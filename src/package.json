@@ -1,0 +1,28 @@
+{
+  "name": "workticket",
+  "version": "1.0.0-beta.1",
+  "private": true,
+  "description": "Job management platform for skilled trades businesses — manage the full job lifecycle from first customer contact to final invoice",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WorkTicket/workticket"
+  },
+  "homepage": "https://workticket.app",
+  "bugs": {
+    "url": "https://github.com/WorkTicket/workticket/issues"
+  },
+  "keywords": [
+    "work-ticket",
+    "job-management",
+    "trades",
+    "contractor",
+    "field-service",
+    "ai",
+    "speech-to-text"
+  ],
+  "author": "WorkTicket Team",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  }
+}

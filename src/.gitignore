@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+.next/
+.expo/
+dist/
+.tsbuildinfo
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment
+.env
+.env.local
+.env.production
+.env.production.*
+backend/.env
+backend/.env.*
+!backend/.env.example
+!backend/.env.test
+web-dashboard/.env
+web-dashboard/.env.*
+!web-dashboard/.env.example
+mobile-app/.env
+mobile-app/.env.*
+!mobile-app/.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage
+htmlcov/
+.coverage
+coverage/
+
+# Security audit artifacts
+bandit_report*.json
+bandit_final*.json
+bandit_*final*.json
+*.audit.json

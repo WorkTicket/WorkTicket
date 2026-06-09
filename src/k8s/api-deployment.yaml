@@ -1,0 +1,249 @@
+# WorkTicket Kubernetes Deployment Manifests (S-2 / H-3 fix)
+# =============================================================================
+# Deploy with: kubectl apply -f k8s/
+# Requires: PostgreSQL (external), Redis (external), Ollama (external or GPU node)
+#
+# These manifests implement the horizontal scaling required by the audit:
+# - Backend API: 3 replicas minimum
+# - Celery workers: 3 replicas per AI queue type (text/image/audio)
+# - HPA configured for CPU + queue depth auto-scaling
+# =============================================================================
+
+# --- Namespace ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workticket
+  labels:
+    app: workticket
+    environment: production
+---
+# --- ConfigMap ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workticket-config
+  namespace: workticket
+data:
+  APP_NAME: "WorkTicket API"
+  PGBOUNCER_ENABLED: "true"
+  WS_ENABLED: "true"
+  OLLAMA_TEXT_MODEL: "llama3.1"
+  OLLAMA_VISION_MODEL: "llama3.2-vision"
+  WHISPER_MODEL_SIZE: "base"
+  WHISPER_MAX_CONCURRENT: "3"
+  MAX_IMAGES_PER_JOB: "5"
+  MAX_ATTACHMENT_LIMIT: "10"
+  CORS_ORIGINS: "https://app.workticket.app,https://admin.workticket.app"
+  DB_POOL_SIZE: "25"
+  DB_MAX_OVERFLOW: "10"
+  DB_POOL_TIMEOUT: "30"
+  CELERY_POOL_SIZE: "5"
+  SHUTDOWN_GRACE_SECONDS: "240"
+  LB_DRAIN_TIMEOUT: "5.0"
+  DEPLOY_ID: "k8s"
+  CLAMD_HOST: "clamav-service"
+  CLAMD_PORT: "3310"
+  CLAMD_TIMEOUT: "30.0"
+  CLAMD_MAX_SCAN_SIZE: "52428800"
+---
+# =============================================================================
+# WARNING: The following Secrets contain placeholder values (__CHANGE_ME__
+# or empty strings) that MUST be replaced with real values via an external
+# secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault, Sealed
+# Secrets) before deploying to any non-development environment.
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workticket-secrets
+  namespace: workticket
+type: Opaque
+stringData:
+  DATABASE_URL: ""
+  DATABASE_READONLY_URL: ""
+  REDIS_URL: ""
+  REDIS_BROKER_URL: ""
+  REDIS_CACHE_URL: ""
+  REDIS_PASSWORD: ""
+  POSTGRES_PASSWORD: ""
+  CLERK_JWT_ISSUER: ""
+  STRIPE_SECRET_KEY: ""
+  STRIPE_WEBHOOK_SECRET: ""
+  RESEND_API_KEY: ""
+  CELERY_TASK_SIGNING_KEY: ""
+  METRICS_ACCESS_TOKEN: ""
+  ALLOWED_HOSTS: ""
+  SENTRY_DSN: ""
+  POSTHOG_API_KEY: ""
+---
+# --- Backend API Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workticket-api
+  namespace: workticket
+  labels:
+    app: workticket
+    component: api
+spec:
+  replicas: 3
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: workticket
+      component: api
+  template:
+    metadata:
+      labels:
+        app: workticket
+        component: api
+    spec:
+      terminationGracePeriodSeconds: 240
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: workticket
+                    component: api
+      containers:
+        - name: api
+          image: workticket-backend:1.0.0-beta.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: workticket-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_URL
+            - name: REDIS_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_BROKER_URL
+            - name: REDIS_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_CACHE_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: POSTGRES_PASSWORD
+            - name: CLERK_JWT_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CLERK_JWT_ISSUER
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: STRIPE_SECRET_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: STRIPE_WEBHOOK_SECRET
+            - name: CELERY_TASK_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: CELERY_TASK_SIGNING_KEY
+            - name: METRICS_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: METRICS_ACCESS_TOKEN
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: workticket-secrets
+                  key: ALLOWED_HOSTS
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 10
+---
+# --- Backend API Service ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workticket-api
+  namespace: workticket
+spec:
+  selector:
+    app: workticket
+    component: api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP
+

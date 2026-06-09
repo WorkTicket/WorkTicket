@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+# Shell scripts must stay LF
+*.sh text eol=lf
+
+# PowerShell scripts
+*.ps1 text eol=crlf

@@ -1,0 +1,78 @@
+name: Security Tests
+on:
+  pull_request:
+    paths:
+      - "src/backend/**"
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: workticket_test
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        working-directory: ./src/backend
+        run: |
+          pip install -r requirements.txt
+          pip install pytest httpx pytest-asyncio
+      - name: Run AI sanitization CI gate
+        working-directory: ./src/backend
+        run: python scripts/audit_ai_sanitization.py
+      - name: Run security tests
+        working-directory: ./src/backend
+        run: |
+          pytest tests/test_token_version.py tests/test_sanitization.py -v --tb=short
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/workticket_test
+          REDIS_URL: redis://localhost:6379/0
+          CLERK_JWT_ISSUER: https://clerk.example.com
+          ALLOWED_HOSTS: "*"
+      - name: Verify no hardcoded secrets
+        working-directory: ./src
+        run: |
+          # L-1 FIX: CI gate that prevents hardcoded secrets from being merged
+          echo "Scanning for hardcoded secrets patterns..."
+          SECRET_PATTERNS=(
+            'changeme_in_production'
+            'sk_live_[a-zA-Z0-9]{24,}'
+            'whsec_[a-zA-Z0-9]{24,}'
+            'rk_live_[a-zA-Z0-9]{24,}'
+          )
+          FAILED=0
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            if grep -r --include='*.py' --include='*.yml' --include='*.yaml' --include='*.json' -l "$pattern" . 2>/dev/null | grep -v '.github/workflows' | grep -v '.env.' | grep -v 'test_'; then
+              echo "ERROR: Found potential secret matching pattern: $pattern"
+              FAILED=1
+            fi
+          done
+          if [ $FAILED -eq 1 ]; then
+            echo "Secret scan failed — remove hardcoded credentials before merging"
+            exit 1
+          fi
+          echo "Secret scan passed"
+      - name: Verify secret rotation script is executable
+        run: |
+          # L-1 FIX: Ensure secret rotation script exists and is valid
+          if [ -f "ops/scripts/rotate-secrets.sh" ]; then
+            echo "Secret rotation script found"
+            # Validate script syntax (dry-run)
+            bash -n ops/scripts/rotate-secrets.sh && echo "Rotation script syntax valid"
+          else
+            echo "WARNING: Secret rotation script not found — manual rotation required"
+          fi

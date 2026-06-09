@@ -1,0 +1,36 @@
+name: Dependency Audit
+on:
+  pull_request:
+    paths:
+      - "src/backend/requirements.txt"
+      - "src/web-dashboard/package.json"
+      - "src/mobile-app/package.json"
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: pip-audit
+        working-directory: ./src/backend
+        run: |
+          pip install pip-audit
+          pip-audit --requirement requirements.txt --desc on
+
+      - name: npm audit web-dashboard
+        working-directory: ./src/web-dashboard
+        run: npm audit --audit-level=critical
+
+      - name: npm audit mobile-app
+        working-directory: ./src/mobile-app
+        run: npm audit --audit-level=critical

@@ -1,0 +1,135 @@
+WORKTICKET PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 WorkTicket. All rights reserved.
+
+This WorkTicket Proprietary Software License ("License") governs access to and use of the WorkTicket software platform, including all related services, applications, APIs, and documentation (collectively, the "Service").
+
+By accessing or using the Service, you agree to be bound by this License.
+
+---
+
+DEFINITIONS
+
+"Company" refers to WorkTicket.
+
+"Service" refers to the hosted software platform, including all web, mobile, API, and backend services.
+
+"User" refers to any individual or organization accessing the Service.
+
+"Content" refers to any data, files, records, or information uploaded or processed through the Service.
+
+---
+
+OWNERSHIP AND INTELLECTUAL PROPERTY
+
+The Service, including but not limited to all software, source code, architecture, design, UI/UX, workflows, algorithms, documentation, and branding, is and shall remain the exclusive property of WorkTicket.
+
+No ownership rights are transferred to the User.
+
+The Service is protected under applicable intellectual property laws, including copyright, trademark, and trade secret laws.
+
+---
+
+LICENSE GRANT
+
+Subject to compliance with this License and any applicable subscription agreement, WorkTicket grants the User a limited, non-exclusive, non-transferable, non-sublicensable, revocable right to access and use the Service solely for internal business purposes via authorized interfaces.
+
+No rights are granted to: access source code; reproduce the Service; create derivative works; or commercially exploit the Service outside authorized use.
+
+---
+
+RESTRICTIONS
+
+Users shall not, and shall not permit any third party to:
+
+- Copy, modify, distribute, or create derivative works of the Service
+- Reverse engineer, decompile, disassemble, or attempt to extract source code
+- Access the Service to build or support a competing product
+- Rent, lease, sell, sublicense, or transfer access to the Service
+- Circumvent authentication, security, or usage limitations
+- Use automated scraping or data extraction methods without authorization
+
+---
+
+SERVICE MODEL (SAAS ONLY)
+
+The Service is provided strictly as a hosted software-as-a-service (SaaS) platform.
+
+Users are not granted access to: source code; deployment infrastructure; backend systems; or model logic or internal services.
+
+All access is provided exclusively through approved web interfaces and APIs controlled by WorkTicket.
+
+---
+
+USER DATA AND CONTENT
+
+Users retain ownership of their Content.
+
+By using the Service, Users grant WorkTicket a worldwide, non-exclusive license to host, store, process, transmit, and display Content solely for the purpose of operating and improving the Service.
+
+WorkTicket does not sell User data.
+
+---
+
+CONFIDENTIALITY AND TRADE SECRETS
+
+All non-public aspects of the Service are confidential and constitute trade secrets of WorkTicket.
+
+Users agree not to: disclose internal system behavior; attempt to replicate system functionality; or benchmark or publicly analyze performance without permission.
+
+---
+
+FEEDBACK
+
+Any feedback, suggestions, or ideas provided by Users may be used by WorkTicket without restriction or compensation.
+
+---
+
+SUSPENSION AND TERMINATION
+
+WorkTicket may suspend or terminate access to the Service immediately if: the User violates this License; payment obligations are not met; or security or legal risks are detected.
+
+Upon termination, all rights granted under this License immediately cease.
+
+---
+
+DISCLAIMERS
+
+The Service is provided on an "AS IS" and "AS AVAILABLE" basis.
+
+WorkTicket makes no warranties of any kind, express or implied, including but not limited to: uninterrupted availability; error-free operation; or fitness for a particular purpose.
+
+---
+
+LIMITATION OF LIABILITY
+
+To the maximum extent permitted by law, WorkTicket shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from use of the Service.
+
+Total liability shall not exceed the amount paid by the User in the preceding twelve (12) months.
+
+---
+
+EXPORT CONTROL AND COMPLIANCE
+
+Users agree to comply with all applicable local and international laws regarding use of the Service.
+
+---
+
+GOVERNING LAW
+
+This License shall be governed by the laws of the jurisdiction in which WorkTicket is legally registered, without regard to conflict of law principles.
+
+---
+
+CHANGES TO THIS LICENSE
+
+WorkTicket reserves the right to modify this License at any time. Continued use of the Service constitutes acceptance of the updated terms.
+
+---
+
+CONTACT
+
+For legal or licensing inquiries, contact:
+
+WorkTicket Legal
+legal@workticket.dev

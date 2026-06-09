@@ -1,0 +1,59 @@
+# WorkTicket Code Ownership
+# Last reviewed: 2026-06-06
+
+# Infrastructure & Platform
+/src/backend/app/database.py       @workticket/infrastructure
+/src/backend/app/config.py         @workticket/infrastructure
+/src/backend/app/redis*.py         @workticket/infrastructure
+/src/backend/app/sync_redis*.py    @workticket/infrastructure
+/src/backend/app/db/               @workticket/infrastructure
+/src/backend/app/middleware/        @workticket/infrastructure
+/src/backend/app/monitoring/        @workticket/infrastructure
+/src/backend/app/deploy/            @workticket/infrastructure
+/ops/                               @workticket/infrastructure
+/src/k8s/                           @workticket/infrastructure
+/src/docker-compose*.yml            @workticket/infrastructure
+/src/nginx/                         @workticket/infrastructure
+/src/backend/Dockerfile             @workticket/infrastructure
+/src/whisper-service/Dockerfile     @workticket/infrastructure
+
+# Security
+/src/backend/app/auth/              @workticket/security
+/src/backend/app/security/          @workticket/security
+/src/backend/app/secrets/           @workticket/security
+/src/backend/tests/security/        @workticket/security
+/src/backend/tests/adversarial/     @workticket/security
+SECURITY.md                         @workticket/security
+
+# CI/CD
+/.github/                           @workticket/infrastructure
+
+# AI & ML
+/src/backend/app/ai/                @workticket/ai-team
+/src/whisper-service/               @workticket/ai-team
+
+# Billing & Payments
+/src/backend/app/billing/           @workticket/billing-team
+/src/backend/app/pricing/           @workticket/billing-team
+
+# Core Business Logic
+/src/backend/app/jobs/              @workticket/core-team
+/src/backend/app/quotes/            @workticket/core-team
+/src/backend/app/estimates/         @workticket/core-team
+/src/backend/app/media/             @workticket/core-team
+/src/backend/app/notifications/     @workticket/core-team
+/src/backend/app/analytics/         @workticket/core-team
+
+# Frontend
+/src/web-dashboard/                 @workticket/frontend
+/src/mobile-app/                    @workticket/mobile
+
+# Documentation
+/docs/                              @workticket/docs
+*.md                                @workticket/docs
+
+# Database migrations
+/src/backend/alembic/               @workticket/infrastructure @workticket/core-team
+
+# Chaos & Testing
+/chaos/                             @workticket/infrastructure @workticket/core-team

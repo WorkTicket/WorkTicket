@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "WorkTicket",
+    "slug": "workticket",
+    "version": "1.0.0-beta.1",
+    "orientation": "portrait",
+    "scheme": "workticket",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#1e40af",
+      "resizeMode": "contain"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/your-project-id"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.workticket.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "WorkTicket needs camera access to take job photos.",
+        "NSPhotoLibraryUsageDescription": "WorkTicket needs photo library access to upload job photos.",
+        "NSMicrophoneUsageDescription": "WorkTicket needs microphone access for voice notes.",
+        "NSFaceIDUsageDescription": "WorkTicket uses Face ID to keep your account secure."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.workticket.app",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "WorkTicket needs camera access to take job photos."
+        }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "enableFTS": false
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "WorkTicket uses Face ID to keep your account secure."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1e40af"
+        }
+      ],
+      "expo-av"
+    ]
+  }
+}

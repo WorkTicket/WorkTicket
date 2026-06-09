@@ -1,0 +1,40 @@
+# Kustomization file for WorkTicket Kubernetes deployment
+# =============================================================================
+# Deploy with: kubectl apply -k k8s/
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: workticket
+
+resources:
+  - api-deployment.yaml
+  - worker-deployments.yaml
+  - network-policy.yaml
+
+commonLabels:
+  app.kubernetes.io/name: workticket
+  app.kubernetes.io/version: "1.0.0-beta-ready"
+
+configMapGenerator:
+  - name: workticket-config
+    behavior: merge
+    literals:
+      - APP_NAME=WorkTicket API
+      - WS_ENABLED=true
+      - OLLAMA_TEXT_MODEL=llama3.1
+      - OLLAMA_VISION_MODEL=llama3.2-vision
+
+# WARNING: The secretGenerator below uses literals which stores secrets in
+# plaintext. For production, replace with an external secrets manager
+# (e.g., AWS Secrets Manager, HashiCorp Vault, or Sealed Secrets).
+secretGenerator:
+  - name: workticket-secrets
+    behavior: merge
+    literals:
+      - CELERY_TASK_SIGNING_KEY=${CELERY_TASK_SIGNING_KEY:?CELERY_TASK_SIGNING_KEY is required}
+
+images:
+  - name: workticket-backend
+    newTag: "1.0.0-beta.1"
