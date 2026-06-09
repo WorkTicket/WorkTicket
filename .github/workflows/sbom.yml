@@ -13,7 +13,7 @@ jobs:
   generate-sbom:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Generate backend SBOM
         uses: anchore/sbom-action@v0.17.0
