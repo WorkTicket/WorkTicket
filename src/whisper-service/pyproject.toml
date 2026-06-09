@@ -13,7 +13,7 @@ dependencies = [
     "uvicorn[standard]==0.30.6",
     "faster-whisper==1.1.0",
     "httpx==0.28.0",
-    "python-multipart==0.0.27",
+    "python-multipart==0.0.32",
 ]
 
 [project.optional-dependencies]
