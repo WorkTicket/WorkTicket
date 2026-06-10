@@ -25,7 +25,7 @@ class BillingAccount(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), unique=True, nullable=False)
     is_deleted = Column(sa.Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     plan = Column(String(50), default="free")
     monthly_quota_acu = Column(Numeric(12, 4), default=15.0)
     used_acu = Column(Numeric(12, 4), default=0.0)
@@ -40,13 +40,13 @@ class BillingAccount(Base):
     risk_score = Column(Integer, default=0)
     temp_quota_multiplier = Column(Numeric(6, 4), default=Decimal("1.0000"), nullable=False)
     stripe_subscription_id = Column(String(255), nullable=True)
-    reservation_heartbeat_at = Column(DateTime, nullable=True)
-    billing_period_start = Column(DateTime, nullable=True)
-    billing_period_end = Column(DateTime, nullable=True)
-    reset_at = Column(DateTime, nullable=True)
-    last_reconciled = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    reservation_heartbeat_at = Column(DateTime(timezone=True), nullable=True)
+    billing_period_start = Column(DateTime(timezone=True), nullable=True)
+    billing_period_end = Column(DateTime(timezone=True), nullable=True)
+    reset_at = Column(DateTime(timezone=True), nullable=True)
+    last_reconciled = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     storage_quota_bytes = Column(sa.BigInteger, default=5 * 1024**3, nullable=False)  # 5GB default
     used_storage_bytes = Column(sa.BigInteger, default=0, nullable=False)
     version = Column(Integer, default=0, nullable=False)
@@ -83,7 +83,7 @@ class UsageLedger(Base):
     original_job_id = Column(UUID(as_uuid=True), nullable=True)
     user_id = Column(String(255), nullable=True)
     billing_period = Column(String(7), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class AIJobEstimate(Base):
@@ -101,7 +101,7 @@ class AIJobEstimate(Base):
     approved = Column(Boolean, default=False)
     rejected_reason = Column(String(255), nullable=True)
     billing_period = Column(String(7), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class StripeWebhookEvent(Base):
@@ -114,7 +114,7 @@ class StripeWebhookEvent(Base):
     company_id = Column(
         UUID(as_uuid=True), nullable=True, comment="nullable for dedup entries, populated after processing"
     )
-    processed_at = Column(DateTime, default=_utcnow)
+    processed_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class Invoice(Base):
@@ -134,14 +134,14 @@ class Invoice(Base):
     job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="SET NULL"), nullable=False)
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
     is_deleted = Column(sa.Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     line_items = Column(JSONB, nullable=False)
     subtotal = Column(Numeric(12, 2), default=0.0)
     tax = Column(Numeric(12, 2), default=0.0)
     total = Column(Numeric(12, 2), default=0.0)
     status = Column(String(20), default="draft")  # draft, sent, paid, void
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class BillingAuditLog(Base):
@@ -167,4 +167,4 @@ class BillingAuditLog(Base):
     field_name = Column(String(100), nullable=False)
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)

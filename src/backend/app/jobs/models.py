@@ -66,8 +66,8 @@ class Company(Base):
     trade_type = Column(String(50), nullable=False)
     stripe_customer_id = Column(String(255), nullable=True)
     stripe_subscription_id = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     users = relationship("User", back_populates="company")
 
@@ -87,8 +87,8 @@ class User(Base, SoftDeleteMixin):
     role = Column(String(50), default=UserRole.technician.value)
     is_active = Column(Boolean, default=True)
     token_version = Column(Integer, default=0)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     company = relationship("Company", back_populates="users")
     jobs: list["Job"] = relationship("Job", back_populates="technician")
@@ -142,8 +142,8 @@ class Customer(Base, SoftDeleteMixin):
     encrypted_email = Column(sa.Text, nullable=True)
     encrypted_phone = Column(sa.Text, nullable=True)
     encrypted_name = Column(sa.Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     @property
     def safe_email(self) -> str:
@@ -211,16 +211,16 @@ class Job(Base, SoftDeleteMixin):
     technician_id = Column(String(255), ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
     status = Column(String(50), default=JobStatus.pending.value)
     ai_processing_state = Column(String(20), default=AIProcessingState.none.value)
-    ai_processing_updated_at = Column(DateTime, nullable=True)
+    ai_processing_updated_at = Column(DateTime(timezone=True), nullable=True)
     retry_count = Column(Integer, default=0)
     compensation_attempts = Column(Integer, default=0)
     state_cycle_counter = Column(Integer, default=0)
-    state_cycle_reset_at = Column(DateTime, nullable=True)
-    scheduled_time = Column(DateTime)
+    state_cycle_reset_at = Column(DateTime(timezone=True), nullable=True)
+    scheduled_time = Column(DateTime(timezone=True))
     description = Column(Text)
     address = Column(Text)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     technician: Optional["User"] = relationship("User", back_populates="jobs")
     media: list["JobMedia"] = relationship("JobMedia", back_populates="job")
@@ -243,7 +243,7 @@ class JobMedia(Base):
     ai_processed = Column(Boolean, default=False)
     upload_signature = Column(String(128), nullable=True)  # H6: HMAC binding upload to pre-signed URL
     content_hash = Column(String(128), nullable=True)  # H6: SHA-256 of uploaded content for integrity
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     job: Optional["Job"] = relationship("Job", back_populates="media")
 
@@ -267,7 +267,7 @@ class AIOutput(Base):
     json_result = Column(Text, nullable=False)
     confidence_score = Column(Float)
     model_used = Column(String(100))
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     job = relationship("Job", back_populates="ai_outputs")
 
@@ -295,9 +295,9 @@ class Quote(Base, SoftDeleteMixin):
     total_amount = Column(Numeric(12, 2))
     line_items = Column(Text)
     pdf_url = Column(String(1024))
-    approved_at = Column(DateTime)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    approved_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class JobAuditLog(Base):
@@ -323,7 +323,7 @@ class JobAuditLog(Base):
     field_name = Column(String(100), nullable=False)
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class UserAuditLog(Base):
@@ -348,4 +348,4 @@ class UserAuditLog(Base):
     field_name = Column(String(100), nullable=False)
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)

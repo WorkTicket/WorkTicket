@@ -6,7 +6,7 @@ from sqlalchemy import select as sa_select
 
 class SoftDeleteMixin:
     is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     def soft_delete(self):
         self.is_deleted = True

@@ -22,7 +22,7 @@ class EstimateAuditSnapshot(Base):
     snapshot_data = Column(JSONB, nullable=False)
     previous_snapshot_id = Column(UUID(as_uuid=True), nullable=True)
     diff_data = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     __table_args__ = (
         Index("ix_estimate_audit_estimate_id", "estimate_id"),

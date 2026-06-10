@@ -46,8 +46,8 @@ class AnalyticsEvent(Base):
     __tablename__ = "analytics_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
-    client_timestamp = Column(DateTime, nullable=True)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    client_timestamp = Column(DateTime(timezone=True), nullable=True)
     event_name = Column(String(100), nullable=False)
     user_id = Column(String(255), nullable=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)

@@ -18,4 +18,4 @@ class PushToken(Base):
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     push_token = Column(String(512), nullable=False)
     platform = Column(String(50), default="expo")
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)

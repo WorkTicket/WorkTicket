@@ -21,7 +21,7 @@ class IdempotencyKey(Base):
     request_hash = Column(String(64), nullable=False)
     response_json = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="processing")
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
         UniqueConstraint("company_id", "user_id", "idempotency_key", name="uq_company_user_idempotency_key"),

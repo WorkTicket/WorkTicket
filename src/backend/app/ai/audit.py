@@ -49,7 +49,7 @@ class AIAuditLog(Base):
     cpu_time_ms = Column(Float, nullable=True)
     memory_estimate_bytes = Column(BigInteger, nullable=True)
     queue_pressure_at_time = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     event_signature = Column(String(64), nullable=True)
     payload_hash = Column(String(64), nullable=True)
 

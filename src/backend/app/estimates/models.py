@@ -39,8 +39,8 @@ class CompanyPricingBrain(Base):
     after_hours_multiplier = Column(Float, default=1.25)
     estimation_style = Column(String(30), default="range_conservative")
     historical_data_enabled = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class Service(Base):
@@ -51,14 +51,14 @@ class Service(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     name = Column(String(255), nullable=False)
     avg_time_hours = Column(Float, default=1.0)
     pricing_type = Column(String(20), default="hourly")
     flat_rate = Column(Float, nullable=True)
     material_assumptions = Column(JSONB, default=list)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class Estimate(Base, SoftDeleteMixin):
@@ -79,10 +79,10 @@ class Estimate(Base, SoftDeleteMixin):
     assumptions = Column(JSONB, default=list)
     notes = Column(Text)
     ai_generated = Column(Boolean, default=True)
-    approved_at = Column(DateTime, nullable=True)
-    sent_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     line_items = relationship(
         "EstimateLineItem",
@@ -108,8 +108,8 @@ class EstimateLineItem(Base):
     ai_rate = Column(Float, nullable=True)
     ai_total = Column(Float, nullable=True)
     override_reason = Column(Text)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     estimate = relationship("Estimate", back_populates="line_items")
 
@@ -129,8 +129,8 @@ class HistoricalJobData(Base):
     materials_used = Column(JSONB, default=list)
     final_invoice_amount = Column(Float)
     technician_notes = Column(Text)
-    job_completed_at = Column(DateTime)
-    created_at = Column(DateTime, default=_utcnow)
+    job_completed_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class EstimateAuditLog(Base):
@@ -155,4 +155,4 @@ class EstimateAuditLog(Base):
     field_name = Column(String(100), nullable=False)
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
