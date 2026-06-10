@@ -27,6 +27,11 @@ depends_on = None
 
 
 def upgrade():
+    conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT to_regclass('ai_output_feedback')"))
+    if result.scalar() is None:
+        return
+
     op.add_column(
         "ai_output_feedback",
         sa.Column("company_id", UUID(as_uuid=True), nullable=True),
@@ -47,6 +52,11 @@ def upgrade():
 
 
 def downgrade():
+    conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT to_regclass('ai_output_feedback')"))
+    if result.scalar() is None:
+        return
+
     op.drop_index("ix_ai_output_feedback_company_id", table_name="ai_output_feedback")
     op.drop_constraint("fk_ai_output_feedback_company_id", "ai_output_feedback", type_="foreignkey")
     op.drop_column("ai_output_feedback", "company_id")

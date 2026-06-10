@@ -239,7 +239,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         f"Unhandled exception: {type(exc).__name__} - {str(exc)}",
         extra={
             "exception_type": type(exc).__name__,
-            "message": str(exc),
+            "error_message": str(exc),
             "request_id": request_id,
             "path": request.url.path,
             "method": request.method,

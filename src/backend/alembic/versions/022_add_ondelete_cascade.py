@@ -67,11 +67,18 @@ _FK_UPDATES = [
 ]
 
 
-def _fk_exists(table: str, fk_name: str) -> bool:
-    """Check if a foreign key constraint exists before dropping."""
+def _table_exists(table: str) -> bool:
     conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT to_regclass(:table)"), {"table": table})
+    return result.scalar() is not None
+
+
+def _fk_exists(table: str, fk_name: str) -> bool:
+    conn = op.get_bind()
+    if not _table_exists(table):
+        return False
     result = conn.execute(
-        sa.text("SELECT 1 FROM pg_constraint WHERE conname = :name AND conrelid = :table::regclass"),
+        sa.text("SELECT 1 FROM pg_constraint WHERE conname = :name AND conrelid = CAST(:table AS regclass)"),
         {"name": fk_name, "table": table},
     )
     return result.scalar() is not None
@@ -79,6 +86,8 @@ def _fk_exists(table: str, fk_name: str) -> bool:
 
 def upgrade() -> None:
     for table, fk_name, column, ref, action in _FK_UPDATES:
+        if not _table_exists(table):
+            continue
         if _fk_exists(table, fk_name):
             op.drop_constraint(fk_name, table, type_="foreignkey")
         op.create_foreign_key(
@@ -131,6 +140,8 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     for table, fk_name, column, ref, _action in _FK_UPDATES:
+        if not _table_exists(table):
+            continue
         if _fk_exists(table, fk_name):
             op.drop_constraint(fk_name, table, type_="foreignkey")
         op.create_foreign_key(fk_name, table, ref.split(".")[0], [column], [ref.split(".")[1]])

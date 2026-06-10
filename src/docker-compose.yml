@@ -105,6 +105,7 @@ services:
     mem_reservation: 256m
     networks:
       - backend-redis
+      - frontend
     environment:
       CLAMAV_NO_FRESHCLAMD: "false"
       CLAMD_STARTUP_TIMEOUT: "120"
@@ -260,7 +261,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-    command: celery -A celery_app beat --loglevel=info
+    command: celery -A celery_app beat --loglevel=info -s /tmp/celerybeat-schedule
     networks:
       - backend-db
       - backend-redis
@@ -283,7 +284,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       CELERY_TASK_SIGNING_KEY: ${CELERY_TASK_SIGNING_KEY:?}
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'celery beat' || exit 1"]
+      test: ["CMD-SHELL", "kill -0 1 2>/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

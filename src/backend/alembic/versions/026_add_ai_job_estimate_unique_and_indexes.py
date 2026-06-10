@@ -40,11 +40,9 @@ def upgrade():
         ["company_id", "job_id"],
     )
 
-    # Add composite index on UsageLedger
-    op.create_index(
-        "ix_usage_ledger_company_created",
-        "usage_ledger",
-        ["company_id", "created_at"],
+    # Add composite index on UsageLedger (may already exist from 023)
+    conn.execute(
+        sa.text("CREATE INDEX IF NOT EXISTS ix_usage_ledger_company_created ON usage_ledger (company_id, created_at)")
     )
 
 

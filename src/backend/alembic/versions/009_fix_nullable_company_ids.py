@@ -27,12 +27,10 @@ def upgrade() -> None:
     op.alter_column("execution_traces", "company_id", existing_type=postgresql.UUID(as_uuid=True), nullable=False)
     # Add index on execution_traces.company_id for tenant-scoped queries
     op.create_index("ix_execution_traces_company_id", "execution_traces", ["company_id"])
-    # Add index on ai_audit_logs.company_id for tenant-scoped queries
-    op.create_index("ix_ai_audit_logs_company_id", "ai_audit_logs", ["company_id"])
+    # Index ix_ai_audit_logs_company_id already created in migration 002
 
 
 def downgrade() -> None:
-    op.drop_index("ix_ai_audit_logs_company_id", table_name="ai_audit_logs")
     op.drop_index("ix_execution_traces_company_id", table_name="execution_traces")
     op.alter_column("execution_traces", "company_id", existing_type=postgresql.UUID(as_uuid=True), nullable=True)
     op.alter_column("ai_audit_logs", "company_id", existing_type=postgresql.UUID(as_uuid=True), nullable=True)

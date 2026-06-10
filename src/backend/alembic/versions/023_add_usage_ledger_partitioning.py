@@ -50,6 +50,7 @@ PARTITION_TABLES = [
 
 
 def upgrade():
+    conn = op.get_bind()
     # 1. Rename existing table to become the default partition
     op.execute("ALTER TABLE usage_ledger RENAME TO usage_ledger_old")
 
@@ -103,20 +104,30 @@ def upgrade():
         FOR VALUES FROM ('2027-01-01') TO (MAXVALUE)
     """)
 
-    # 5. Create indexes on partitioned table
+    # 5. Drop old table if empty (fresh DB) — avoids index name conflict
+    row_count = conn.execute(sa.text("SELECT COUNT(*) FROM usage_ledger_old")).scalar()
+    if row_count and row_count > 0:
+        with contextlib.suppress(Exception):
+            op.drop_index("ix_usage_ledger_company_created", table_name="usage_ledger_old")
+        with contextlib.suppress(Exception):
+            op.drop_index("ix_usage_ledger_job_company_unique", table_name="usage_ledger_old")
+    else:
+        op.execute("DROP TABLE usage_ledger_old")
+
+    # 6. Create indexes on partitioned table
     op.create_index("ix_usage_ledger_company_created", "usage_ledger", ["company_id", "created_at"])
     op.create_index("ix_usage_ledger_created_at", "usage_ledger", ["created_at"])
     op.create_index("ix_usage_ledger_billing_period", "usage_ledger", ["billing_period"])
 
-    # 6. Attach old data as a single partition
-    op.execute("""
-        ALTER TABLE usage_ledger ATTACH PARTITION usage_ledger_old
-        FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')
-    """)
-
-    # 7. Drop old partial unique index (will be recreated on partitioned table)
-    with contextlib.suppress(Exception):
-        op.drop_index("ix_usage_ledger_job_company_unique", table_name="usage_ledger_old")
+    # 7. Attach old data as a single partition (if there are rows)
+    if row_count and row_count > 0:
+        op.execute("ALTER TABLE usage_ledger_old ADD COLUMN user_id VARCHAR(255)")
+        op.execute("ALTER TABLE usage_ledger_old DROP CONSTRAINT usage_ledger_pkey")
+        op.execute("ALTER TABLE usage_ledger_old ADD PRIMARY KEY (id, created_at)")
+        op.execute("""
+            ALTER TABLE usage_ledger ATTACH PARTITION usage_ledger_old
+            FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')
+        """)
 
 
 def downgrade():

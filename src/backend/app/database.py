@@ -821,7 +821,7 @@ def get_beat_session() -> AsyncSession:
 
 def get_db_pool_metrics() -> dict[str, Any]:
     pool = _get_engine().pool
-    total = pool.total()
+    total = pool.size() + pool.overflow()
     checked_out = pool.checkedout()
     return {
         "size": pool.size(),

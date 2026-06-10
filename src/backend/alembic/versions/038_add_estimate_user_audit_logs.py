@@ -31,8 +31,8 @@ def upgrade():
         sa.Column("company_id", UUID(as_uuid=True), nullable=False),
         sa.Column("changed_by_user_id", sa.String(255), nullable=False),
         sa.Column("field_name", sa.String(100), nullable=False),
-        sa.Column("old_value", sa.Text, nullable=True),
-        sa.Column("new_value", sa.Text, nullable=True),
+        sa.Column("old_value", sa.Text(), nullable=True),
+        sa.Column("new_value", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_index("ix_est_audit_logs_estimate_id", "estimate_audit_logs", ["estimate_id"])
@@ -49,8 +49,8 @@ def upgrade():
         sa.Column("company_id", UUID(as_uuid=True), nullable=False),
         sa.Column("changed_by_user_id", sa.String(255), nullable=False),
         sa.Column("field_name", sa.String(100), nullable=False),
-        sa.Column("old_value", sa.Text, nullable=True),
-        sa.Column("new_value", sa.Text, nullable=True),
+        sa.Column("old_value", sa.Text(), nullable=True),
+        sa.Column("new_value", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_index("ix_user_audit_logs_target_user", "user_audit_logs", ["target_user_id"])

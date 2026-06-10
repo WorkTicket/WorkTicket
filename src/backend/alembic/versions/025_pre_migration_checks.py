@@ -12,7 +12,7 @@ from sqlalchemy import text
 from alembic import op
 
 revision = "025"
-down_revision = "024_add_ai_disabled_reason"
+down_revision = "024"
 branch_labels = None
 depends_on = None
 

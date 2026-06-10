@@ -24,10 +24,10 @@ def upgrade() -> None:
     # Step 1: Remove any rows where company_id is NULL
     conn.execute(sa.text("DELETE FROM push_tokens WHERE company_id IS NULL"))
 
-    # Step 2: Remove rows where company_id is not a valid UUID
+    # Step 2: Remove rows where company_id is not a valid UUID (cast to text for regex)
     conn.execute(
         sa.text(
-            "DELETE FROM push_tokens WHERE company_id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'"
+            "DELETE FROM push_tokens WHERE company_id::text !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'"
         )
     )
 
@@ -35,7 +35,7 @@ def upgrade() -> None:
     conn.execute(
         sa.text("""
         DELETE FROM push_tokens
-        WHERE company_id NOT IN (SELECT id::text FROM companies)
+        WHERE company_id NOT IN (SELECT id FROM companies)
     """)
     )
 

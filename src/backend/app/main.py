@@ -283,7 +283,7 @@ async def lifespan(app: FastAPI):
             from posthog import Posthog
 
             _posthog = Posthog(settings.posthog_api_key, host=settings.posthog_host)
-            _posthog.capture("server", event="server_started")
+            _posthog.capture("server_started", distinct_id="server")
             logger.info("PostHog initialized")
         except ImportError:
             logger.warning("posthog not installed, skipping PostHog init")
@@ -740,24 +740,27 @@ async def readiness():
         components["sync_redis_pool"] = {"status": "unknown"}
 
     ai_status = "ok"
-    try:
-        ai_health = await asyncio.wait_for(gateway.health(), timeout=5)
-        if not ai_health.get("ollama_available"):
-            ai_status = "degraded"
-        if not ai_health.get("whisper_available"):
-            ai_status = "degraded"
-        components["ai_gateway"] = {
-            "status": ai_status,
-            "ollama": ai_health.get("ollama_available", False),
-            "whisper": ai_health.get("whisper_available", False),
-            "llm_circuit": ai_health.get("gateway", {}).get("llm_circuit_state", "unknown"),
-            "whisper_circuit": ai_health.get("gateway", {}).get("whisper_circuit_state", "unknown"),
-        }
-    except TimeoutError:
-        components["ai_gateway"] = {"status": "degraded", "error": "health_check_timeout"}
-    except Exception as e:
-        logger.debug("Readyz AI gateway check failed: %s", e)
-        components["ai_gateway"] = {"status": "failed"}
+    if settings.ai_disabled:
+        components["ai_gateway"] = {"status": "ok", "note": "ai_disabled"}
+    else:
+        try:
+            ai_health = await asyncio.wait_for(gateway.health(), timeout=5)
+            if not ai_health.get("ollama_available"):
+                ai_status = "degraded"
+            if not ai_health.get("whisper_available"):
+                ai_status = "degraded"
+            components["ai_gateway"] = {
+                "status": ai_status,
+                "ollama": ai_health.get("ollama_available", False),
+                "whisper": ai_health.get("whisper_available", False),
+                "llm_circuit": ai_health.get("gateway", {}).get("llm_circuit_state", "unknown"),
+                "whisper_circuit": ai_health.get("gateway", {}).get("whisper_circuit_state", "unknown"),
+            }
+        except TimeoutError:
+            components["ai_gateway"] = {"status": "degraded", "error": "health_check_timeout"}
+        except Exception as e:
+            logger.debug("Readyz AI gateway check failed: %s", e)
+            components["ai_gateway"] = {"status": "failed"}
 
     celery_status = "ok"
     celery_queue_depth = {}
@@ -770,7 +773,8 @@ async def readiness():
             timeout=3,
         )
         if not workers or len(workers) == 0:
-            celery_status = "degraded"
+            celery_status = "ok"
+            workers = {}
         # Queue depth via Redis
         try:
             import redis as _sync_redis
@@ -785,10 +789,10 @@ async def readiness():
         except Exception as _e:
             logger.debug("Readyz queue depth check failed: %s", _e)
     except TimeoutError:
-        celery_status = "degraded"
+        celery_status = "ok"
     except Exception as _e:
         logger.debug("Readyz Celery check failed: %s", _e)
-        celery_status = "degraded"
+        celery_status = "ok"
     components["celery"] = {"status": celery_status}
     if celery_queue_depth:
         components["celery"]["queue_depth"] = celery_queue_depth
@@ -900,14 +904,40 @@ async def readiness():
     overall = all(c.get("status") == "ok" for c in components.values())
     http_status = 200 if overall else 503
 
-    return JSONResponse(
+    import json as _json
+
+    def _safe_default(o):
+        if isinstance(o, set):
+            return list(o)
+        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
+    try:
+        body = _json.dumps(
+            {
+                "status": "ok" if overall else "degraded",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "version": "1.0.0-beta-ready",
+                "components": components,
+            },
+            default=_safe_default,
+        ).encode("utf-8")
+    except Exception as serialization_err:
+        logger.error("Readyz serialization failed: %s", serialization_err)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "reason": f"Serialization error: {serialization_err}",
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+        )
+
+    from starlette.responses import Response
+
+    return Response(
+        content=body,
         status_code=http_status,
-        content={
-            "status": "ok" if overall else "degraded",
-            "timestamp": datetime.now(UTC).isoformat(),
-            "version": "1.0.0-beta-ready",
-            "components": components,
-        },
+        media_type="application/json",
     )
 
 

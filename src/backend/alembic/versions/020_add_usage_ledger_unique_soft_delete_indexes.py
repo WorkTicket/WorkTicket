@@ -32,6 +32,12 @@ def upgrade() -> None:
         postgresql_where=sa.text("job_id IS NOT NULL"),
     )
 
+    # Add soft-delete columns to quotes and estimates if missing
+    op.add_column("quotes", sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default="false"))
+    op.add_column("quotes", sa.Column("deleted_at", sa.DateTime(), nullable=True))
+    op.add_column("estimates", sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default="false"))
+    op.add_column("estimates", sa.Column("deleted_at", sa.DateTime(), nullable=True))
+
     # Composite indexes for soft-delete purge queries (M8 fix)
     op.create_index(
         "ix_jobs_is_deleted_deleted_at",
@@ -55,3 +61,7 @@ def downgrade() -> None:
     op.drop_index("ix_jobs_is_deleted_deleted_at")
     op.drop_index("ix_quotes_is_deleted_deleted_at")
     op.drop_index("ix_estimates_is_deleted_deleted_at")
+    op.drop_column("quotes", "deleted_at")
+    op.drop_column("quotes", "is_deleted")
+    op.drop_column("estimates", "deleted_at")
+    op.drop_column("estimates", "is_deleted")

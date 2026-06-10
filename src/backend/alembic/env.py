@@ -1,6 +1,8 @@
+import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
+import sqlalchemy as sa
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 from app.ai.audit import AIAuditLog  # noqa: F401
@@ -29,7 +31,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
+    url = os.environ["DATABASE_URL"]
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True, compare_server_default=True
     )
@@ -38,17 +40,18 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        os.environ["DATABASE_URL"].replace("+asyncpg", ""),
         poolclass=pool.NullPool,
     )
-    with connectable.connect() as connection:
+    with connectable.begin() as connection:
+        connection.execute(sa.text(
+            "CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(255) NOT NULL, PRIMARY KEY (version_num))"
+        ))
         context.configure(
-            connection=connection, target_metadata=target_metadata, compare_type=True, compare_server_default=True
+            connection=connection, target_metadata=target_metadata
         )
-        with context.begin_transaction():
-            context.run_migrations()
+        context.run_migrations()
 
 
 if context.is_offline_mode():

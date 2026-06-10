@@ -23,7 +23,6 @@ def upgrade() -> None:
         "ix_ai_outputs_company_job_created",
         "ai_outputs",
         ["company_id", "job_id", sa.text("created_at DESC")],
-        postgresql_concurrently=True,
     )
 
 

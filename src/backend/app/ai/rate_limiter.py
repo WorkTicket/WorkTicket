@@ -149,8 +149,9 @@ class RedisTokenBucket:
                     return 1
                 end
                 """,
-                keys=[redis_key],
-                args=[now, self.rate, self.burst, tokens],
+                1,
+                redis_key,
+                now, self.rate, self.burst, tokens,
             )
             return bool(result)
         except Exception as e:

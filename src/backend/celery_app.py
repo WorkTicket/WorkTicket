@@ -5,6 +5,8 @@ from celery_config.worker import _run_async, celery_app  # noqa: F401
 
 # Task imports (register them with the Celery app)
 from tasks.job_tasks import process_job_task  # noqa: F401
+from tasks import maintenance  # noqa: F401
+from tasks import billing_tasks  # noqa: F401
 
 # ---- Static analysis test patterns (preserved across refactoring) ----
 
