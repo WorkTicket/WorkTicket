@@ -15,7 +15,6 @@ import argparse
 import random
 import string
 import sys
-from pathlib import Path
 
 # Test data generators
 ALPHANUMERIC = string.ascii_letters + string.digits
@@ -129,7 +128,7 @@ def main():
     iterations = args.iterations
 
     print(f"{'='*60}")
-    print(f"  MIGRATION FUZZ TEST")
+    print("  MIGRATION FUZZ TEST")
     print(f"  Iterations: {iterations}")
     print(f"  Database: {db_url}")
     print(f"{'='*60}\n")
@@ -154,7 +153,7 @@ def main():
     ]
 
     print(f"\n{'='*60}")
-    print(f"  VERIFICATION")
+    print("  VERIFICATION")
     print(f"{'='*60}\n")
 
     for table in critical_tables:
@@ -169,7 +168,7 @@ def main():
     health = check_migration_health(db_url)
     print(f"\n  Alembic current: {health['current']}")
     if health["has_pending"]:
-        print(f"  ⚠ Pending migrations detected!")
+        print("  ⚠ Pending migrations detected!")
 
     # Check row counts
     for table in ["alembic_version"]:

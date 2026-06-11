@@ -14,7 +14,6 @@ import argparse
 import sys
 from pathlib import Path
 
-
 REQUIRED_SECTIONS = [
     ("trigger", ["trigger", "when to use", "activation", "alert"]),
     ("diagnosis", ["diagnosis", "symptoms", "identification", "detection", "investigation"]),
@@ -94,7 +93,7 @@ def main():
         print(json.dumps({"valid": total_valid, "invalid": total_invalid, "results": all_results}, indent=2))
     else:
         print(f"\n{'='*60}")
-        print(f"  RUNBOOK VALIDATION REPORT")
+        print("  RUNBOOK VALIDATION REPORT")
         print(f"{'='*60}")
         print(f"  Valid: {total_valid}")
         print(f"  Invalid: {total_invalid}")
@@ -107,7 +106,7 @@ def main():
                 print(f"    Missing sections: {', '.join(r['missing'])}")
 
         if total_invalid == 0:
-            print(f"  ✓ ALL RUNBOOKS HAVE REQUIRED SECTIONS\n")
+            print("  ✓ ALL RUNBOOKS HAVE REQUIRED SECTIONS\n")
         else:
             print(f"  ⚠ {total_invalid} runbook(s) need attention\n")
 

@@ -8,10 +8,9 @@ Usage:
     python tests/contract/test_dashboard_contract.py
 """
 
-import json
-import os
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 
 
 # Skip if pact-python is not installed (optional dependency)
