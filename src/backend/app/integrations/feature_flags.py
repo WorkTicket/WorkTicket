@@ -23,7 +23,7 @@ class IntegrationFeatureFlags:
             r = self._get_redis()
             val = r.get(self._flag_key(provider, "enabled"))
             if val is not None:
-                return val == b"1"
+                return val == b"1"  # type: ignore[no-any-return]
         except Exception:
             pass
         return True

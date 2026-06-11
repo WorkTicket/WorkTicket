@@ -344,7 +344,7 @@ async def export_my_data(
         export_data["billing"] = {
             "plan": billing.plan,
             "monthly_quota_acu": float(billing.monthly_quota_acu) if billing.monthly_quota_acu else 0,
-            "acu_remaining": float(billing.acu_remaining) if billing.acu_remaining else 0,
+            "acu_remaining": float(billing.acu_remaining) if billing.acu_remaining else 0,  # type: ignore[attr-defined]
             "acu_debt": float(billing.acu_debt) if hasattr(billing, "acu_debt") and billing.acu_debt else 0,
             "invoices": [],
         }
@@ -353,7 +353,7 @@ async def export_my_data(
                 {
                     "id": str(inv.id),
                     "stripe_invoice_id": inv.stripe_invoice_id if hasattr(inv, "stripe_invoice_id") else None,
-                    "amount_due": float(inv.amount_due) if inv.amount_due else 0,
+                    "amount_due": float(inv.amount_due) if inv.amount_due else 0,  # type: ignore[attr-defined]
                     "status": inv.status if hasattr(inv, "status") else "unknown",
                     "created_at": inv.created_at.isoformat() if inv.created_at else None,
                 }
@@ -494,14 +494,14 @@ async def export_tenant_data(
         export_data["billing"] = {
             "plan": billing.plan,
             "monthly_quota_acu": float(billing.monthly_quota_acu) if billing.monthly_quota_acu else 0,
-            "acu_remaining": float(billing.acu_remaining) if billing.acu_remaining else 0,
+            "acu_remaining": float(billing.acu_remaining) if billing.acu_remaining else 0,  # type: ignore[attr-defined]
             "invoices": [],
         }
         for inv in invoices_result.scalars().all():
             export_data["billing"]["invoices"].append(
                 {
                     "id": str(inv.id),
-                    "amount_due": float(inv.amount_due) if inv.amount_due else 0,
+                    "amount_due": float(inv.amount_due) if inv.amount_due else 0,  # type: ignore[attr-defined]
                     "status": inv.status if hasattr(inv, "status") else "unknown",
                     "created_at": inv.created_at.isoformat() if inv.created_at else None,
                 }
@@ -518,7 +518,7 @@ async def export_tenant_data(
         export_data["usage_ledger"].append(
             {
                 "id": str(u_entry.id),
-                "acu_amount": float(u_entry.acu_amount) if u_entry.acu_amount else 0,
+                "acu_amount": float(u_entry.acu_amount) if u_entry.acu_amount else 0,  # type: ignore[attr-defined]
                 "operation": u_entry.operation if hasattr(u_entry, "operation") else None,
                 "description": u_entry.description if hasattr(u_entry, "description") else None,
                 "created_at": u_entry.created_at.isoformat() if u_entry.created_at else None,

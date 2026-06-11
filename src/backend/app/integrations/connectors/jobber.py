@@ -167,7 +167,7 @@ def _status_name(status) -> str | None:
     if status is None:
         return None
     if isinstance(status, dict):
-        return status.get("name", "").lower()
+        return status.get("name", "").lower()  # type: ignore[no-any-return]
     return str(status).lower()
 
 
@@ -237,7 +237,7 @@ class JobberConnector(BaseConnector):
         if "errors" in data:
             errors = data["errors"]
             raise RuntimeError(f"Jobber GraphQL errors: {errors}")
-        return data.get("data", {})
+        return data.get("data", {})  # type: ignore[no-any-return]
 
     async def _paginate(self, query: str, result_path: str, variables: dict | None = None) -> list[dict]:
         if variables is None:

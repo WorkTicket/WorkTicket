@@ -9,6 +9,7 @@ import re
 import time
 from collections import OrderedDict
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 import stripe
@@ -38,7 +39,7 @@ settings = get_settings()
 BASE_URL = settings.app_base_url or "http://localhost:3000"
 
 stripe.api_key = settings.stripe_secret_key
-stripe.api_timeout = settings.stripe_api_timeout
+stripe.api_timeout = settings.stripe_api_timeout  # type: ignore[attr-defined]
 _STRIPE_TIMEOUT = settings.stripe_api_timeout
 
 _stripe_circuit = None
@@ -408,13 +409,13 @@ async def _process_webhook(
             customer = (
                 stripe_subscription.customer
                 if hasattr(stripe_subscription, "customer")
-                else stripe_subscription.get("customer", "")
+                else                 stripe_subscription.get("customer", "")  # type: ignore[attr-defined]
             )
             if customer != customer_id:
                 logger.error(
                     "Stripe subscription/customer mismatch - potential fraud: sub=%s, sub_customer=%s, event_customer=%s",
                     subscription_id,
-                    stripe_subscription.get("customer"),
+                    stripe_subscription.get("customer"),  # type: ignore[attr-defined]
                     customer_id,
                     extra={"event_id": event_id, "event_type": event_type},
                 )
@@ -814,7 +815,7 @@ async def export_invoice(
             story.append(Spacer(1, 12))
 
             if invoice.line_items:
-                items = invoice.line_items if isinstance(invoice.line_items, dict) else {}
+                items: dict[str, Any] = invoice.line_items if isinstance(invoice.line_items, dict) else {}
                 _item_count = len(items)
                 if _item_count > _max_pdf_line_items:
                     raise HTTPException(

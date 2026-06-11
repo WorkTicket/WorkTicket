@@ -111,7 +111,7 @@ class TenantRedis:
         if r is None:
             return None
         try:
-            return r.ttl(_tenant_key(tenant_id, key))
+            return r.ttl(_tenant_key(tenant_id, key))  # type: ignore[no-any-return]
         except Exception as e:
             logger.debug("TenantRedis.ttl failed for %s: %s", key, e)
             return None
@@ -122,7 +122,7 @@ class TenantRedis:
         if r is None:
             return None
         try:
-            return r.incr(_tenant_key(tenant_id, key), amount)
+            return r.incr(_tenant_key(tenant_id, key), amount)  # type: ignore[no-any-return]
         except Exception as e:
             logger.debug("TenantRedis.incr failed for %s: %s", key, e)
             return None

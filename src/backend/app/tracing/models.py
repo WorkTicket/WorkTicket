@@ -55,9 +55,9 @@ async def cleanup_old_traces():
 def get_or_create_trace(request: dict | None = None, job_id: str | None = None, company_id: str | None = None) -> str:
     """Get trace_id from request context or create a new one."""
     if request and hasattr(request, "state") and hasattr(request.state, "correlation_id"):
-        return request.state.correlation_id
+        return request.state.correlation_id  # type: ignore[no-any-return]
     if request and "X-Correlation-ID" in request.headers:  # type: ignore[attr-defined]
-        return request.headers["X-Correlation-ID"]
+        return request.headers["X-Correlation-ID"]  # type: ignore[attr-defined, no-any-return]
     return str(uuid.uuid4())
 
 

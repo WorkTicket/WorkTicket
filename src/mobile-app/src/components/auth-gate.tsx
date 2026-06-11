@@ -15,24 +15,29 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [registering, setRegistering] = useState(false);
 
   const syncRegisteredUser = useCallback(async () => {
-    const status = await fetchRegistrationStatus();
-    if (!status.registered || !status.company_id || !status.role) {
-      setGateState("unregistered");
-      return;
+    try {
+      const status = await fetchRegistrationStatus();
+      if (!status.registered || !status.company_id || !status.role) {
+        setGateState("unregistered");
+        return;
+      }
+      const token = (await getToken()) ?? "";
+      setAuth({
+        userId: status.user_id,
+        companyId: status.company_id,
+        role: status.role,
+        token,
+      });
+      setGateState("ready");
+    } catch {
+      setGateState("error");
     }
-    const token = (await getToken()) ?? "";
-    setAuth({
-      userId: status.user_id,
-      companyId: status.company_id,
-      role: status.role,
-      token,
-    });
-    setGateState("ready");
   }, [getToken, setAuth]);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
-    syncRegisteredUser().catch(() => setGateState("error"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async init, state updates happen after await
+    syncRegisteredUser();
   }, [isLoaded, user, syncRegisteredUser]);
 
   const handleRegister = useCallback(async () => {
@@ -71,7 +76,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           className="bg-blue-600 px-6 py-3 rounded-lg"
           onPress={() => {
             setGateState("loading");
-            syncRegisteredUser().catch(() => setGateState("error"));
+            syncRegisteredUser();
           }}
           accessibilityLabel="Retry"
           accessibilityRole="button"

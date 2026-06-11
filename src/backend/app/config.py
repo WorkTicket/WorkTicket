@@ -305,7 +305,7 @@ class FeatureFlags:
                 if r:
                     company_val = r.get(f"{self._redis_prefix}company:{company_id}:{flag}")
                     if company_val is not None:
-                        return company_val == b"1"
+                        return company_val == b"1"  # type: ignore[no-any-return]
             except Exception as e:
                 logger.debug("FeatureFlags: company override check failed: %s", e)
         try:
@@ -313,7 +313,7 @@ class FeatureFlags:
             if r:
                 val = r.get(f"{self._redis_prefix}global:{flag}")
                 if val is not None:
-                    return val == b"1"
+                    return val == b"1"  # type: ignore[no-any-return]
         except Exception as e:
             logger.debug("FeatureFlags: global flag check failed: %s", e)
         return self._flags.get(flag, False)

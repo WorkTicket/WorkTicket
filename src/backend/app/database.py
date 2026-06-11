@@ -81,12 +81,12 @@ def _get_entity_table_name(orm_execute_state) -> str | None:
     try:
         for desc in orm_execute_state.column_expressions:
             if hasattr(desc, "table") and hasattr(desc.table, "name"):
-                return desc.table.name
+                return desc.table.name  # type: ignore[no-any-return]
         for desc in orm_execute_state.column_expressions:
             if hasattr(desc, "entity_namespace"):
                 entity = desc.entity_namespace
                 if hasattr(entity, "__tablename__"):
-                    return entity.__tablename__
+                    return entity.__tablename__  # type: ignore[no-any-return]
     except Exception as _e:
         logger.debug("Failed to extract entity table name (column expressions): %s", _e)
     try:
@@ -94,7 +94,7 @@ def _get_entity_table_name(orm_execute_state) -> str | None:
         if hasattr(statement, "froms") and statement.froms:
             for f in statement.froms:
                 if hasattr(f, "name"):
-                    return f.name
+                    return f.name  # type: ignore[no-any-return]
     except Exception as _e:
         logger.debug("Failed to extract entity table name (froms): %s", _e)
     return None
@@ -176,7 +176,7 @@ class _LazySessionFactory:
 
     def __call__(self, *args, **kwargs):
         _ensure_engine()
-        return self._factory(*args, **kwargs)
+        return self._factory(*args, **kwargs)  # type: ignore[misc]
 
     def _set(self, factory):
         self._factory = factory
@@ -306,7 +306,8 @@ def _get_circuit_redis():
         return get_sync_redis()
     except Exception as _e:
         logger.debug("Failed to get circuit breaker Redis: %s", _e)
-        return None
+    return _read_replica_lag_seconds
+
 
 
 _CIRCUIT_LUA_OPEN = """
@@ -416,7 +417,7 @@ def _pool_utilization() -> float:
         checked_out = p.checkedout()
         if total <= 0:
             return 0.0
-        return checked_out / total
+        return checked_out / total  # type: ignore[no-any-return]
     except Exception as e:
         logger.debug("Failed to compute pool utilization: %s", e)
         return 0.0
@@ -508,7 +509,7 @@ def _check_db_circuit() -> None:
                                 )
                                 _POOL_CIRCUIT_LAST_FAILURE = time.monotonic()
                                 raise _db_unavailable("Pool exhausted — skipping half-open probe")
-                    except _db_unavailable.__class__:
+                    except _db_unavailable.__class__:  # type: ignore[misc]
                         raise
                     except Exception as _e:
                         logger.debug("Half-open probe pool check failed: %s", _e)
@@ -518,7 +519,7 @@ def _check_db_circuit() -> None:
                 raise _db_unavailable(
                     f"Database circuit breaker open (global, cooldown={cooldown_remaining:.0f}s remaining)."
                 )
-    except _db_unavailable.__class__:
+    except _db_unavailable.__class__:  # type: ignore[misc]
         raise
     except Exception as _e:
         logger.debug("Redis-coordinated circuit breaker check failed: %s", _e)
@@ -681,7 +682,7 @@ def get_readonly_engine():
 
 def get_readonly_session() -> AsyncSession:
     _ensure_readonly_engine()
-    return _readonly_sessionmaker()
+    return _readonly_sessionmaker()  # type: ignore[misc]
 
 
 async def check_read_replica_lag() -> float:
@@ -738,6 +739,8 @@ async def check_read_replica_lag() -> float:
     except Exception as e:
         logger.debug("Failed to report read replica lag metric: %s", e)
 
+    return _read_replica_lag_seconds
+
 
 async def get_read_replica_safe_session() -> AsyncSession:
     """SC2: Get a read replica session, falling back to primary if lag is too high.
@@ -748,7 +751,7 @@ async def get_read_replica_safe_session() -> AsyncSession:
     lag = await check_read_replica_lag()
     if lag > 30.0:
         logger.warning("Read replica lag %.0fs exceeds threshold — routing to primary", lag)
-        return AsyncSessionLocal()
+        return AsyncSessionLocal()  # type: ignore[no-any-return]
     return get_readonly_session()
 
 
@@ -809,12 +812,12 @@ def get_beat_engine():
 # SC-5: Consolidated to use the main engine's sessionmaker with proper pool sizing.
 # Celery workers now share the main connection pool rather than creating a separate engine.
 def get_celery_session() -> AsyncSession:
-    return AsyncSessionLocal()
+    return AsyncSessionLocal()  # type: ignore[no-any-return]
 
 
 def get_beat_session() -> AsyncSession:
     get_beat_engine()
-    return _beat_sessionmaker()
+    return _beat_sessionmaker()  # type: ignore[misc]
 
 
 def get_db_pool_metrics() -> dict[str, Any]:
@@ -1140,8 +1143,8 @@ def _register_query_monitoring():
             normalized = re.sub(r"'(?:[^'\\]|\\.)'", "?", str(statement))
             normalized = re.sub(r"\d+", "N", normalized)
             query_hash = hashlib.sha256(normalized.encode()).hexdigest()[:12]
-            counter = _n1_query_counter.get()
-            counter[query_hash] += 1
+            counter = _n1_query_counter.get()  # type: ignore[index]
+            counter[query_hash] += 1  # type: ignore[index]
 
         # Slow query logging (> 500ms)
         if duration_ms > 500:

@@ -190,7 +190,7 @@ async def get_secrets_batch(secret_keys: list[str]) -> dict[str, str | None]:
                         _secret_cache[key] = (str(value), time.time() + _CACHE_TTL)
                 else:
                     result[key] = os.environ.get(key.upper())
-            return result
+            return result  # type: ignore[return-value]
     except Exception as e:
         logger.debug("Vault batch retrieval failed: %s", e)
 

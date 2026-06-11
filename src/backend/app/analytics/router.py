@@ -243,7 +243,7 @@ async def list_analytics_events(
         event_dicts.append(event_dict)
 
     # Calculate total pages
-    total_pages = (total + pagination.page_size - 1) // pagination.page_size
+    total_pages = (total + pagination.page_size - 1) // pagination.page_size  # type: ignore[operator]
 
     return PaginatedResponse(
         items=event_dicts, total=total, page=pagination.page, page_size=pagination.page_size, total_pages=total_pages

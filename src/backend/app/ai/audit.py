@@ -135,7 +135,7 @@ class AuditService:
                 q = q.where(AIAuditLog.request_type == request_type)
             q = q.limit(limit)
             result = await db.execute(q)
-            return result.scalars().all()
+            return result.scalars().all()  # type: ignore[no-any-return]
 
     @staticmethod
     async def get_failure_rate(minutes: int = 60) -> dict:

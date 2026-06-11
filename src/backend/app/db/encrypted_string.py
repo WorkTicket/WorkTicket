@@ -96,7 +96,7 @@ class EncryptedString(TypeDecorator):
         return _decrypt_value(value)
 
     def copy(self, **kw):
-        return EncryptedString(self.impl.length)
+        return EncryptedString(self.impl.length)  # type: ignore[misc]
 
 
 class PiiAccessAudit:

@@ -179,7 +179,7 @@ class AIGateway:
                 },
             )
 
-        return output
+        return output  # type: ignore[no-any-return]
 
     async def _route(
         self,

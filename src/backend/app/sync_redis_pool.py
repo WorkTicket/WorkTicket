@@ -79,7 +79,7 @@ class SyncRedisPool:
         with self._lock:
             if self._pool is not None:
                 try:
-                    self._pool.close()
+                    self._pool.close()  # type: ignore[attr-defined]
                 except Exception as e:
                     logger.debug("Sync Redis pool close failed: %s", e)
                 self._pool = None

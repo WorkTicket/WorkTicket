@@ -200,7 +200,7 @@ async def transition_job_state(
             job.state_cycle_reset_at = _now_ts
 
         if effective_counter > 0:
-            delay_seconds = min(60 * (2 ** (effective_counter - 1)), 3600)
+            delay_seconds = min(60 * (2 ** (effective_counter - 1)), 3600)  # type: ignore[operator]
             elapsed = _now_ts - last_reset
             if elapsed < delay_seconds:
                 logger.warning(

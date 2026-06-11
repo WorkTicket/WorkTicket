@@ -60,7 +60,7 @@ async def latency_middleware(request: Request, call_next) -> Response:
     for each normalized endpoint path.
     """
     if not _PERF_TRACKING_ENABLED:
-        return await call_next(request)
+        return await call_next(request)  # type: ignore[no-any-return]
 
     start = time.monotonic()
     response = None
@@ -89,7 +89,7 @@ async def latency_middleware(request: Request, call_next) -> Response:
                 # Keep only most recent samples
                 _endpoint_latencies[endpoint_key] = latencies[-_MAX_SAMPLES:]
 
-    return response
+    return response  # type: ignore[no-any-return]
 
 
 def get_percentile(sorted_values: list[float], percentile: float) -> float:

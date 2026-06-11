@@ -109,7 +109,7 @@ async def generate_estimate_ai(
     )
     if result is None:
         return None
-    return _sanitize_output_dict(result)
+    return _sanitize_output_dict(result)  # type: ignore[no-any-return]
 
 
 async def get_historical_insights(

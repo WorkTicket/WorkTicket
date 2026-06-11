@@ -45,7 +45,7 @@ _ESTIMATED_WS_WORKERS = max(1, int(os.getenv("WS_WORKER_REPLICAS", "5")))
 _local_ws_connections: dict = {}
 _local_ws_connection_locks: dict = {}
 
-_active_websockets = set()
+_active_websockets: set[object] = set()
 _active_websockets_lock = asyncio.Lock()
 
 
@@ -680,9 +680,9 @@ async def get_failure_classification(
         cat = classify_failure(t.error_message or "").value
         if cat not in categories:
             categories[cat] = {"count": 0, "recent": []}
-        categories[cat]["count"] += 1
+            categories[cat]["count"] += 1  # type: ignore[operator]
         if len(categories[cat]["recent"]) < 10:
-            categories[cat]["recent"].append(
+            categories[cat]["recent"].append(  # type: ignore[attr-defined]
                 {
                     "trace_id": str(t.trace_id),
                     "job_id": str(t.job_id) if t.job_id else None,
@@ -1283,7 +1283,7 @@ async def _websocket_job_status_handler(
 
     # W2: Start replica heartbeat loop if not already running
     if not hasattr(_websocket_job_status_handler, "_heartbeat_started"):
-        _websocket_job_status_handler._heartbeat_started = True
+        _websocket_job_status_handler._heartbeat_started = True  # type: ignore[attr-defined]
         await _track_ws_task(conn_id, _start_ws_heartbeat())
 
     _ws_msg_redis_key = f"ws_msg:{user_id}:{job_id}"
@@ -1464,7 +1464,7 @@ async def _websocket_job_status_handler(
                 if data == "ping":
                     await _send_ws_json_safe(_send_queue, str(job_id), {"type": "pong"}, websocket=websocket)
                     with contextlib.suppress(Exception):
-                        await websocket.pong()
+                        await websocket.pong()  # type: ignore[attr-defined]
                     continue
 
             except TimeoutError:

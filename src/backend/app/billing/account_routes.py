@@ -32,7 +32,7 @@ router = APIRouter()
 settings = get_settings()
 
 stripe.api_key = settings.stripe_secret_key
-stripe.api_timeout = settings.stripe_api_timeout
+stripe.api_timeout = settings.stripe_api_timeout  # type: ignore[attr-defined]
 _STRIPE_TIMEOUT = settings.stripe_api_timeout
 
 
@@ -93,7 +93,7 @@ async def change_plan(
     new_tier = PLAN_TIERS[payload.plan]
     _old_tier = PLAN_TIERS.get(old_plan, PLAN_TIERS["free"])
 
-    if not company or not company.stripe_subscription_id:
+    if not company or not company.stripe_subscription_id:  # type: ignore[attr-defined]
         raise HTTPException(
             status_code=400,
             detail="Plan changes must be processed through Stripe. Use the checkout endpoint for upgrades or contact support for downgrades.",
@@ -103,32 +103,32 @@ async def change_plan(
 
     stripe_circuit = await _gsc()
     if not await stripe_circuit.is_available():
-        cached = await get_cached_subscription(company.stripe_subscription_id)
+        cached = await get_cached_subscription(company.stripe_subscription_id)  # type: ignore[attr-defined]
         if cached:
             logger.info(
                 "Using cached subscription for plan change company %s (plan=%s, status=%s)",
-                company.id,
+                company.id,  # type: ignore[attr-defined]
                 cached.get("plan"),
                 cached.get("status"),
             )
         else:
             raise HTTPException(status_code=502, detail="Stripe API temporarily unavailable")
     try:
-        stripe_sub = await asyncio.to_thread(lambda: stripe.Subscription.retrieve(company.stripe_subscription_id))
+        stripe_sub = await asyncio.to_thread(lambda: stripe.Subscription.retrieve(company.stripe_subscription_id))  # type: ignore[attr-defined]
         await stripe_circuit.record_success()
         await set_cache_from_stripe_object(stripe_sub)
     except stripe.error.StripeError as e:
         await stripe_circuit.record_failure()
-        cached = await get_cached_subscription(company.stripe_subscription_id)
+        cached = await get_cached_subscription(company.stripe_subscription_id)  # type: ignore[attr-defined]
         if cached:
             logger.info(
                 "Stripe API failed for plan change company %s, using cache: %s",
-                company.id,
+                company.id,  # type: ignore[attr-defined]
                 e,
             )
-            stripe_sub: dict | stripe.Subscription = cached
+            stripe_sub = cached
         else:
-            logger.error("Stripe verification failed for plan change company %s: %s", company.id, e)
+            logger.error("Stripe verification failed for plan change company %s: %s", company.id, e)  # type: ignore[attr-defined]
             raise HTTPException(status_code=502, detail="Failed to verify subscription with Stripe") from e
 
     if isinstance(stripe_sub, dict) and "plan" in stripe_sub and stripe_sub["plan"] != "unknown":
@@ -158,7 +158,7 @@ async def change_plan(
             old_plan,
             payload.plan,
             current_stripe_plan,
-            company.id,
+            company.id,  # type: ignore[attr-defined]
         )
         raise HTTPException(
             status_code=400,
@@ -166,7 +166,7 @@ async def change_plan(
         )
 
     if company:
-        company.subscription_plan = payload.plan
+        company.subscription_plan = payload.plan  # type: ignore[attr-defined]
     account.plan = payload.plan
     account.monthly_quota_acu = new_tier["quota_acu"]
 

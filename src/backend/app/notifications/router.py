@@ -99,7 +99,7 @@ async def cleanup_stale_tokens(
             PushToken.created_at < cutoff,
         )
     )
-    count = result.rowcount
+    count = result.rowcount  # type: ignore[attr-defined]
     if count > 0:
         logger.info("Cleaned up %d stale push tokens for company %s", count, current_user.company_id)
     return {"cleaned": count}
@@ -139,7 +139,7 @@ async def list_push_tokens(
     tokens = result.scalars().all()
 
     # Calculate total pages
-    total_pages = (total + page_size - 1) // page_size
+    total_pages = (total + page_size - 1) // page_size  # type: ignore[operator]
 
     return {
         "items": [

@@ -130,9 +130,9 @@ def _count_unused_indexes() -> int:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 return 0
-            return loop.run_until_complete(_query())
+            return loop.run_until_complete(_query())  # type: ignore[no-any-return]
         except RuntimeError:
-            return asyncio.run(_query())
+            return asyncio.run(_query())  # type: ignore[no-any-return]
     except Exception as e:
         logger.debug("Failed to count unused indexes: %s", e)
         return 0
@@ -172,10 +172,10 @@ def _get_db_index_metrics() -> dict:
     """Get aggregate index metrics."""
     try:
         counts = _get_db_index_counts()
-        return sum(counts.values()) if counts else 0
+        return sum(counts.values()) if counts else 0  # type: ignore[return-value]
     except Exception as e:
         logger.debug("Failed to get DB index metrics: %s", e)
-        return 0
+        return 0  # type: ignore[return-value]
 
 
 def _set_db_circuit_cooldown(seconds: float):
@@ -222,13 +222,13 @@ def _register_ai_circuit_metrics(registry):
             "workticket_ai_gateway_ollama_available",
             "Ollama service availability (1=up, 0=down)",
             registry=registry,
-        ).set_function(_safe_gauge(lambda: 1 if gateway._ollama_available else 0))
+        ).set_function(_safe_gauge(lambda: 1 if gateway._ollama_available else 0))  # type: ignore[attr-defined]
 
         Gauge(
             "workticket_ai_gateway_whisper_available",
             "Whisper service availability (1=up, 0=down)",
             registry=registry,
-        ).set_function(_safe_gauge(lambda: 1 if gateway._whisper_available else 0))
+        ).set_function(_safe_gauge(lambda: 1 if gateway._whisper_available else 0))  # type: ignore[attr-defined]
 
         Gauge(
             "workticket_ai_gateway_llm_circuit",

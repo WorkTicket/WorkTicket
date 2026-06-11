@@ -204,11 +204,11 @@ class HousecallProConnector(BaseConnector):
         }
         response = await self._client.get(f"{HCP_API_BASE}{path}", headers=headers, params=params)
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _get_all(self, path: str) -> list[dict]:
         page = 1
-        all_items = []
+        all_items: list[dict] = []
         while True:
             data = await self._get(path, params={"page": page, "page_size": 100})
             items = data.get("items", data.get("results", data.get("data", [])))

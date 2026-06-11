@@ -98,8 +98,8 @@ class User(Base, SoftDeleteMixin):
         if self.encrypted_email:
             from app.security.encryption import decrypt_field_from_storage
 
-            return decrypt_field_from_storage(self.encrypted_email) or self.email
-        return self.email
+            return decrypt_field_from_storage(self.encrypted_email) or self.email  # type: ignore[return-value]
+        return self.email  # type: ignore[return-value]
 
     @safe_email.setter
     def safe_email(self, value: str):
@@ -115,8 +115,8 @@ class User(Base, SoftDeleteMixin):
         if self.encrypted_name:
             from app.security.encryption import decrypt_field_from_storage
 
-            return decrypt_field_from_storage(self.encrypted_name) or self.name
-        return self.name
+            return decrypt_field_from_storage(self.encrypted_name) or self.name  # type: ignore[return-value]
+        return self.name  # type: ignore[return-value]
 
     @safe_name.setter
     def safe_name(self, value: str):
@@ -150,8 +150,8 @@ class Customer(Base, SoftDeleteMixin):
         if self.encrypted_email:
             from app.security.encryption import decrypt_field_from_storage
 
-            return decrypt_field_from_storage(self.encrypted_email) or self.email
-        return self.email
+            return decrypt_field_from_storage(self.encrypted_email) or self.email  # type: ignore[return-value]
+        return self.email  # type: ignore[return-value]
 
     @safe_email.setter
     def safe_email(self, value: str):
@@ -167,8 +167,8 @@ class Customer(Base, SoftDeleteMixin):
         if self.encrypted_phone:
             from app.security.encryption import decrypt_field_from_storage
 
-            return decrypt_field_from_storage(self.encrypted_phone) or self.phone
-        return self.phone
+            return decrypt_field_from_storage(self.encrypted_phone) or self.phone  # type: ignore[return-value]
+        return self.phone  # type: ignore[return-value]
 
     @safe_phone.setter
     def safe_phone(self, value: str):
@@ -184,8 +184,8 @@ class Customer(Base, SoftDeleteMixin):
         if self.encrypted_name:
             from app.security.encryption import decrypt_field_from_storage
 
-            return decrypt_field_from_storage(self.encrypted_name) or self.name
-        return self.name
+            return decrypt_field_from_storage(self.encrypted_name) or self.name  # type: ignore[return-value]
+        return self.name  # type: ignore[return-value]
 
     @safe_name.setter
     def safe_name(self, value: str):

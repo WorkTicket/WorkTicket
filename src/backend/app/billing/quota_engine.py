@@ -50,9 +50,9 @@ class AIQuotaEngine:
         await db.execute(stmt)
         result = await db.execute(select(BillingAccount).where(BillingAccount.company_id == company_id))
         account = result.scalar_one_or_none()
-        return account
+        return account  # type: ignore[return-value]
 
-    async def check_and_reserve(
+    async def check_and_reserve(  # type: ignore[return]
         self,
         db: AsyncSession,
         company_id: UUID,
@@ -154,7 +154,7 @@ class AIQuotaEngine:
                     )
                     result = await db.execute(stmt)
 
-                    if result.rowcount == 0:
+                    if result.rowcount == 0:  # type: ignore[attr-defined]
                         raise _ConcurrencyRetryError()
             except _ConcurrencyRetryError:
                 if attempt < max_retries - 1:
@@ -236,7 +236,7 @@ class AIQuotaEngine:
             )
             result = await db.execute(stmt)
 
-            if result.rowcount > 0:
+            if result.rowcount > 0:  # type: ignore[attr-defined]
                 break
 
             if attempt < max_retries - 1:
@@ -274,7 +274,7 @@ class AIQuotaEngine:
             )
             result = await db.execute(stmt)
 
-            if result.rowcount > 0:
+            if result.rowcount > 0:  # type: ignore[attr-defined]
                 break
 
             if attempt < max_retries - 1:

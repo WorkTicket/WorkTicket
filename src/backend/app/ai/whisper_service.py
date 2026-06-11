@@ -51,7 +51,7 @@ class WhisperService(AIService):
             )
             resp.raise_for_status()
             data = resp.json()
-            return data.get("text", "")
+            return data.get("text", "")  # type: ignore[no-any-return]
         except httpx.TimeoutException:
             logger.error("Whisper service request timed out")
             return ""

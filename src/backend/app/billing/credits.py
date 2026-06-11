@@ -85,7 +85,7 @@ async def grant_credit(
         )
     )
     credit_result = await db.execute(insert_stmt)
-    if credit_result.rowcount == 0:
+    if credit_result.rowcount == 0:  # type: ignore[attr-defined]
         logger.info("Duplicate credit for job %s (reason: %s) caught by DB constraint — skipping", job_id, reason)
         return {"status": "skipped_duplicate", "company_id": str(company_id), "job_id": str(job_id)}
 

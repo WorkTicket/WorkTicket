@@ -79,7 +79,7 @@ class OllamaService(AIService):
         }
         response = await client.request(method, url, json=json_body, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _generate(
         self, model: str, prompt: str, system: str = "", images: list[str] | None = None, trace_id: str | None = None
@@ -101,7 +101,7 @@ class OllamaService(AIService):
         for attempt in range(self.MAX_RETRIES):
             try:
                 data = await self._request("POST", "/api/generate", payload, trace_id=trace_id)
-                return data.get("response", "")
+                return data.get("response", "")  # type: ignore[no-any-return]
             except httpx.TimeoutException:
                 logger.warning("Ollama generate timeout on attempt %d", attempt + 1)
                 if attempt == self.MAX_RETRIES - 1:

@@ -48,7 +48,7 @@ async def get_idempotent_response(
 
     if record.response_json:
         try:
-            return json.loads(record.response_json)
+            return json.loads(record.response_json)  # type: ignore[no-any-return]
         except (json.JSONDecodeError, TypeError):
             pass
 

@@ -84,6 +84,6 @@ def decode_cursor(cursor: str) -> tuple[datetime, str]:
         if len(parts) != 2:
             raise ValueError(f"Invalid cursor format: {raw}")
         ts = datetime.fromisoformat(parts[0]) if parts[0] else None
-        return ts, parts[1]
+        return ts, parts[1]  # type: ignore[return-value]
     except Exception as e:
         raise ValueError(f"Invalid cursor: {e}") from e

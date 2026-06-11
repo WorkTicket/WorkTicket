@@ -49,7 +49,7 @@ class SpendMonitor:
                 socket_connect_timeout=1,
                 socket_keepalive=True,
             )
-            await self._redis.ping()
+            await self._redis.ping()  # type: ignore[misc]
             self._last_health_check = now
             return self._redis
         except Exception:
@@ -186,7 +186,7 @@ class AbuseDetector:
             now = time.time()
             try:
                 count = await r.zcount(key, now - self._window_seconds, now)
-                return count > self._spike_threshold
+                return count > self._spike_threshold  # type: ignore[no-any-return]
             except Exception as e:
                 logger.error(
                     "Redis spike check failed for company %s — treating as no spike (fail-safe): %s", company_id, e
@@ -272,8 +272,8 @@ class AbuseDetector:
             .values(risk_score=BillingAccount.risk_score - decay_rate)
         )
         result = await db.execute(stmt)
-        if result.rowcount > 0:
-            logger.info("Decayed risk scores for %d companies by %d points", result.rowcount, decay_rate)
+        if result.rowcount > 0:  # type: ignore[attr-defined]
+            logger.info("Decayed risk scores for %d companies by %d points", result.rowcount, decay_rate)  # type: ignore[attr-defined]
         await db.flush()
 
 

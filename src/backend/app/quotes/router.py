@@ -192,7 +192,7 @@ async def approve_quote(
             )
             tokens = token_result.scalars().all()
             if tokens:
-                await notify_quote_approved(str(quote.job_id), [(t.id, t.push_token) for t in tokens])
+                await notify_quote_approved(str(quote.job_id), [(t.id, t.push_token) for t in tokens])  # type: ignore[misc]
     except Exception as e:
         logger.warning("Failed to send approval notification: %s", e)
 

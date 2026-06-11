@@ -88,9 +88,9 @@ async def export_my_data(
         .limit(500)
     )
     jobs = jobs_result.scalars().all()
-    export_data["jobs"] = [
+    export_data["jobs"] = [  # type: ignore[misc]
         {
-            "id": str(j.id),
+            "id": str(j.id),  # type: ignore[misc]
             "status": j.status,
             "description": j.description,
             "address": j.address,
@@ -110,9 +110,9 @@ async def export_my_data(
         .limit(500)
     )
     customers = customers_result.scalars().all()
-    export_data["customers"] = [
+    export_data["customers"] = [  # type: ignore[misc]
         {
-            "id": str(c.id),
+            "id": str(c.id),  # type: ignore[misc]
             "name": c.name,
             "email": c.email,
             "phone": c.phone,

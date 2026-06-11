@@ -96,14 +96,14 @@ class CircuitBreaker:
         if self._lua_sha is None:
             with contextlib.suppress(Exception):
                 self._lua_sha = r.script_load(_CIRCUIT_LUA_CHECK_HALF_OPEN)
-        return self._lua_sha
+        return self._lua_sha  # type: ignore[return-value]
 
     async def is_available(self) -> bool:
         r = await self._redis()
         if r:
             try:
                 state = await r.get(f"{self._redis_prefix}:open")
-                return state != b"1"
+                return state != b"1"  # type: ignore[no-any-return]
             except Exception:
                 pass
         async with self._lock:

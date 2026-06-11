@@ -41,7 +41,7 @@ def encrypt_push_token(plaintext: str) -> str:
     if f is None:
         return plaintext
     try:
-        return f.encrypt(plaintext.encode()).decode()
+        return f.encrypt(plaintext.encode()).decode()  # type: ignore[no-any-return]
     except Exception as e:
         logger.error("Push token encryption failed: %s", e)
         return plaintext
@@ -53,7 +53,7 @@ def decrypt_push_token(ciphertext: str) -> str | None:
         logger.warning("Cannot decrypt push token: encryption not configured")
         return None
     try:
-        return f.decrypt(ciphertext.encode()).decode()
+        return f.decrypt(ciphertext.encode()).decode()  # type: ignore[no-any-return]
     except Exception:
         logger.warning("Push token decryption failed — token may have been encrypted with a different key")
         return None

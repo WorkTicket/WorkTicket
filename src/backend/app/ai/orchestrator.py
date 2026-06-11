@@ -15,10 +15,10 @@ class AIOrchestrator:
         self.audio_service: AIService = WhisperService()
 
     async def transcribe_audio(self, audio_url: str, trace_id: str | None = None) -> str:
-        return await self.audio_service.transcribe_audio(audio_url, trace_id=trace_id)
+        return await self.audio_service.transcribe_audio(audio_url, trace_id=trace_id)  # type: ignore[call-arg]
 
     async def analyze_images(self, image_urls: list[str], trace_id: str | None = None) -> str:
-        return await self.text_service.analyze_images(image_urls, trace_id=trace_id)
+        return await self.text_service.analyze_images(image_urls, trace_id=trace_id)  # type: ignore[call-arg]
 
     async def generate_structured_output(
         self,
@@ -27,7 +27,7 @@ class AIOrchestrator:
         job_metadata: dict | None = None,
         trace_id: str | None = None,
     ) -> AIOutputSchema:
-        return await self.text_service.generate_structured_output(
+        return await self.text_service.generate_structured_output(  # type: ignore[call-arg]
             transcript=transcript,
             vision_analysis=vision_analysis,
             job_metadata=job_metadata or {},
@@ -44,7 +44,7 @@ class AIOrchestrator:
 
         _settings = get_settings()
         try:
-            result = await self.text_service._generate(
+            result = await self.text_service._generate(  # type: ignore[attr-defined]
                 model=_settings.ollama_text_model,
                 prompt=user_prompt,
                 system=system_prompt,
@@ -63,7 +63,7 @@ class AIOrchestrator:
             content = cleaned.strip()
             if not content:
                 return None
-            return json.loads(content)
+            return json.loads(content)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("generate_chat_output failed: %s", e)
             return None

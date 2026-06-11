@@ -60,10 +60,10 @@ async def get_dlq_entries(
 async def cleanup_expired_dlq(db: AsyncSession) -> int:
     result = await db.execute(delete(DeadLetterJob).where(DeadLetterJob.expires_at <= datetime.now(UTC)))
     await db.commit()
-    count = result.rowcount
+    count = result.rowcount  # type: ignore[attr-defined]
     if count:
         logger.info("Cleaned up %d expired dead letter entries", count)
-    return count
+    return count  # type: ignore[no-any-return]
 
 
 async def get_dlq_by_failure_category(db: AsyncSession, hours: int = 24) -> list[dict]:

@@ -140,10 +140,21 @@ class QuickBooksConnector(BaseConnector):
         }
         response = await self._client.get(url, headers=headers, params=params)
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
+
+    _VALID_ENTITIES = frozenset({
+        "Account", "Bill", "BillPayment", "Budget", "Class", "CompanyCurrency",
+        "CreditMemo", "Customer", "Department", "Deposit", "Employee",
+        "Estimate", "Invoice", "Item", "JournalEntry", "Payment",
+        "PaymentMethod", "Purchase", "PurchaseOrder", "RefundReceipt",
+        "SalesReceipt", "TaxAgency", "TaxCode", "TaxRate", "Term",
+        "TimeActivity", "Transfer", "Vendor", "VendorCredit",
+    })
 
     async def _query_all(self, entity: str, query_filter: str | None = None) -> list[dict]:
-        query = f"SELECT * FROM {entity}"
+        if entity not in self._VALID_ENTITIES:
+            raise ValueError(f"Invalid QuickBooks entity: {entity}")
+        query = f"SELECT * FROM {entity}"  # nosec B608 -- entity validated against _VALID_ENTITIES whitelist above
         if query_filter:
             query += f" WHERE {query_filter}"
         query += " MAXRESULTS 1000"
@@ -151,7 +162,7 @@ class QuickBooksConnector(BaseConnector):
         entities = data.get("QueryResponse", {}).get(entity, [])
         if isinstance(entities, dict):
             entities = [entities]
-        return entities
+        return entities  # type: ignore[no-any-return]
 
     async def authenticate(self) -> bool:
         if self.connection and self.connection.access_token:

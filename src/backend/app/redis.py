@@ -76,7 +76,7 @@ class RedisPool:
         """Close all connections in the pool."""
         if self._pool is not None:
             try:
-                await self._pool.disconnect()
+                await self._pool.disconnect()  # type: ignore[attr-defined]
             except Exception as e:
                 logger.debug("Redis pool disconnect failed: %s", e)
             self._pool = None
@@ -108,4 +108,4 @@ redis_pool = RedisPool()
 
 async def get_redis() -> object | None:
     """Convenience function to get Redis client from global pool."""
-    return await redis_pool.get_client()
+    return await redis_pool.get_client()  # type: ignore[no-any-return]

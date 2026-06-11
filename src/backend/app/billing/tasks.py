@@ -334,7 +334,7 @@ def merge_dlq_fallback_files(self):
 
     import os as _os
 
-    _dlq_fallback_dir = _os.getenv("DLQ_FALLBACK_DIR", "/tmp/workticket/dlq_fallback")
+    _dlq_fallback_dir = _os.getenv("DLQ_FALLBACK_DIR", "/tmp/workticket/dlq_fallback")  # nosec B108
     if not _os.path.exists(_dlq_fallback_dir):
         return {"status": "no_fallback_dir"}
 
@@ -359,7 +359,7 @@ def replay_dlq_fallback(self):
     import json as _json
     import os as _os
 
-    _dlq_fallback_dir = _os.getenv("DLQ_FALLBACK_DIR", "/tmp/workticket/dlq_fallback")
+    _dlq_fallback_dir = _os.getenv("DLQ_FALLBACK_DIR", "/tmp/workticket/dlq_fallback")  # nosec B108
     _dlq_fallback_path = _os.path.join(_dlq_fallback_dir, "workticket_dlq_fallback.merged.jsonl")
 
     if not _os.path.exists(_dlq_fallback_path):

@@ -16,12 +16,12 @@ class TenantScopedQueryMixin:
         _cid = company_id or get_current_tenant_id()
         if not _cid:
             logger.error(
-                "by_company called without company_id for model %s — blocking query for safety", cls.__tablename__
+                "by_company called without company_id for model %s — blocking query for safety", cls.__tablename__  # type: ignore[attr-defined]
             )
             from sqlalchemy import false
 
             return select(cls).where(false())
-        return select(cls).where(cls.company_id == _cid)
+        return select(cls).where(cls.company_id == _cid)  # type: ignore[attr-defined]
 
     @classmethod
     def by_id_and_company(cls, record_id: Any, company_id: Any = None) -> Select:
@@ -29,9 +29,9 @@ class TenantScopedQueryMixin:
         if not _cid:
             logger.error(
                 "by_id_and_company called without company_id for model %s — blocking query for safety",
-                cls.__tablename__,
+                cls.__tablename__,  # type: ignore[attr-defined]
             )
             from sqlalchemy import false
 
             return select(cls).where(false())
-        return select(cls).where(cls.id == record_id, cls.company_id == _cid)
+        return select(cls).where(cls.id == record_id, cls.company_id == _cid)  # type: ignore[attr-defined]

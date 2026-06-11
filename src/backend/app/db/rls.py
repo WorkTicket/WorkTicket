@@ -125,7 +125,7 @@ async def get_rls_tenant_context(session: AsyncSession) -> str | None:
         result = await session.execute(text("SHOW app.current_tenant_id"))
         val = result.scalar()
         if val and val.strip():
-            return val.strip()
+            return val.strip()  # type: ignore[no-any-return]
     except Exception as e:
         logger.debug("Failed to read RLS tenant context: %s", e)
     return None

@@ -66,7 +66,7 @@ def resolve_plan_from_price_id(price_id: str) -> str:
     if _STRIPE_PRICE_MAP_CACHE:
         for pname, pid in _STRIPE_PRICE_MAP_CACHE.items():
             if pid == price_id:
-                return pname
+                return pname  # type: ignore[no-any-return]
     return "unknown"
 
 
@@ -118,7 +118,7 @@ async def get_cached_subscription(
         if data.get("expires_at", 0) < time.time():
             await r.delete(f"{_CACHE_PREFIX}{stripe_subscription_id}")
             return None
-        return data
+        return data  # type: ignore[no-any-return]
     except Exception as e:
         logger.warning("Stripe cache read error for %s: %s", stripe_subscription_id, e)
         return None

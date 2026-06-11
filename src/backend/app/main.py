@@ -53,7 +53,7 @@ if not settings.debug:
 # when middleware earlier in the chain raises before this middleware runs.
 _active_requests = 0
 _active_requests_lock = asyncio.Lock()
-_active_websockets = set()
+_active_websockets: set[object] = set()
 _active_websockets_lock = asyncio.Lock()
 _shutdown_event = asyncio.Event()
 _shutting_down = False
@@ -168,7 +168,7 @@ async def lifespan(app: FastAPI):
 
             r = await get_redis()
             if r:
-                await r.ping()
+                await r.ping()  # type: ignore[attr-defined]
             break
         except Exception as e:
             logger.debug("Redis not available (attempt %d): %s", i + 1, e)
@@ -348,7 +348,7 @@ async def lifespan(app: FastAPI):
         _active_websockets.clear()
 
     await asyncio.gather(
-        *[ws.close(code=1000, reason="Server shutdown") for ws in websockets_to_close],
+        *[ws.close(code=1000, reason="Server shutdown") for ws in websockets_to_close],  # type: ignore[attr-defined]
         return_exceptions=True,
     )
 
@@ -593,7 +593,7 @@ async def healthz():
 
         r = await get_redis()
         if r:
-            await asyncio.wait_for(r.ping(), timeout=2)
+            await asyncio.wait_for(r.ping(), timeout=2)  # type: ignore[attr-defined]
             redis_ok = True
     except Exception as _e:
         logger.debug("Healthz Redis check failed: %s", _e)
@@ -625,7 +625,7 @@ async def healthz():
     overall = "ok" if redis_ok and db_status == "ok" and celery_ok else "degraded"
 
     try:
-        from app.monitoring.prometheus import Gauge
+        from app.monitoring.prometheus import Gauge  # type: ignore[attr-defined]
 
         _healthz_gauge = Gauge(
             "workticket_healthz_status",
@@ -705,7 +705,7 @@ async def readiness():
 
         r = await get_redis()
         if r:
-            await asyncio.wait_for(r.ping(), timeout=2)
+            await asyncio.wait_for(r.ping(), timeout=2)  # type: ignore[attr-defined]
         else:
             redis_status = "failed"
     except Exception as _e:
@@ -785,7 +785,7 @@ async def readiness():
             _r = _sync_redis.from_url(broker_url, socket_connect_timeout=1)
             for q in ("default", "ai_text", "ai_audio", "ai_image", "beat"):
                 qlen = _r.llen(q)
-                if qlen > 0:
+                if qlen > 0:  # type: ignore[operator]
                     celery_queue_depth[q] = qlen
             _r.close()
         except Exception as _e:
@@ -995,7 +995,7 @@ async def health():
         _r = _sync_redis.from_url(broker_url, socket_connect_timeout=1)
         for q in ("default", "ai_text", "ai_audio", "ai_image", "beat"):
             qlen = _r.llen(q)
-            if qlen > 0:
+            if qlen > 0:  # type: ignore[operator]
                 celery_queue_depth[q] = qlen
         _r.close()
     except Exception:

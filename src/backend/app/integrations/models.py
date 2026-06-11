@@ -105,9 +105,9 @@ class IntegrationConnection(Base):
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     provider = Column(String(50), nullable=False)
     tenant = Column(String(255), nullable=False)
-    connection_status = Column(SAEnum(ConnectionStatus), default=ConnectionStatus.PENDING, nullable=False)
-    access_token = Column(EncryptedString(4000), nullable=True)
-    refresh_token = Column(EncryptedString(4000), nullable=True)
+    connection_status = Column(SAEnum(ConnectionStatus), default=ConnectionStatus.PENDING, nullable=False)  # type: ignore[var-annotated]
+    access_token = Column(EncryptedString(4000), nullable=True)  # type: ignore[var-annotated]
+    refresh_token = Column(EncryptedString(4000), nullable=True)  # type: ignore[var-annotated]
     token_expires_at = Column(DateTime(timezone=True), nullable=True)
     last_sync_at = Column(DateTime(timezone=True), nullable=True)
     metadata_json = Column(JSON, default=dict)
@@ -126,8 +126,8 @@ class ImportJob(Base):
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     connection_id = Column(UUID(as_uuid=True), ForeignKey("integration_connections.id", ondelete="SET NULL"), nullable=True)
     provider = Column(String(50), nullable=False)
-    import_type = Column(SAEnum(ImportType), nullable=False)
-    status = Column(SAEnum(ImportStatus), default=ImportStatus.PENDING, nullable=False)
+    import_type = Column(SAEnum(ImportType), nullable=False)  # type: ignore[var-annotated]
+    status = Column(SAEnum(ImportStatus), default=ImportStatus.PENDING, nullable=False)  # type: ignore[var-annotated]
     progress_pct = Column(Float, default=0.0)
     total_records = Column(Integer, default=0)
     imported_count = Column(Integer, default=0)
@@ -152,8 +152,8 @@ class ImportLog(Base):
     external_system = Column(String(50), nullable=False)
     external_id = Column(String(255), nullable=False)
     internal_id = Column(String(255), nullable=True)
-    entity_type = Column(SAEnum(ImportType), nullable=False)
-    result = Column(SAEnum(ImportResult), default=ImportResult.SUCCESS, nullable=False)
+    entity_type = Column(SAEnum(ImportType), nullable=False)  # type: ignore[var-annotated]
+    result = Column(SAEnum(ImportResult), default=ImportResult.SUCCESS, nullable=False)  # type: ignore[var-annotated]
     error_message = Column(Text, nullable=True)
     raw_data = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
@@ -177,7 +177,7 @@ class MappingRule(Base):
     source_field = Column(String(255), nullable=False)
     destination_field = Column(String(255), nullable=False)
     transformation_rule = Column(Text, nullable=True)
-    entity_type = Column(SAEnum(ImportType), nullable=False)
+    entity_type = Column(SAEnum(ImportType), nullable=False)  # type: ignore[var-annotated]
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
