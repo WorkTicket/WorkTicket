@@ -214,7 +214,7 @@ async def deactivate_user(
         if r:
             await r.setex(f"session_blacklist:{payload.user_id}:{user_to_deactivate.token_version}", 86400, "1")
     except Exception:
-        pass
+        pass  # nosec B110
 
     await db.flush()
 

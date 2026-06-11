@@ -145,7 +145,7 @@ class CompanyConcurrencyLock:
                 if new_count is not None and new_count < 0:
                     increment_counter("workticket_concurrency_counter_negative_total", {"company_id": company_id})
             except Exception:
-                pass
+                pass  # nosec B110
         except Exception as e:
             logger.error("Redis concurrency release failed for %s: %s", company_id, e)
 

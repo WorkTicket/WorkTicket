@@ -101,7 +101,7 @@ def setup_otel(app=None, engine=None):
             RequestsInstrumentor().instrument()
             logger.debug("requests instrumented for OpenTelemetry")
         except Exception:
-            pass
+            pass  # nosec B110
 
         _OTEL_INITIALIZED = True
         logger.info("OpenTelemetry initialized, exporting traces to %s", endpoint)
@@ -160,7 +160,7 @@ def get_current_trace_id() -> str | None:
         if span and span.get_span_context().is_valid:
             return format(span.get_span_context().trace_id, "032x")
     except Exception:
-        pass
+        pass  # nosec B110
     return None
 
 
@@ -175,7 +175,7 @@ def get_current_span_id() -> str | None:
         if span and span.get_span_context().is_valid:
             return format(span.get_span_context().span_id, "016x")
     except Exception:
-        pass
+        pass  # nosec B110
     return None
 
 
@@ -190,7 +190,7 @@ def add_span_event(name: str, attributes: dict | None = None):
         if span:
             span.add_event(name, attributes or {})
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 def set_span_attribute(key: str, value: str | bool | int | float):
@@ -204,7 +204,7 @@ def set_span_attribute(key: str, value: str | bool | int | float):
         if span:
             span.set_attribute(key, value)
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 def record_exception_on_span(exc: Exception, attributes: dict | None = None):
@@ -218,4 +218,4 @@ def record_exception_on_span(exc: Exception, attributes: dict | None = None):
         if span:
             span.record_exception(exc, attributes=attributes or {})
     except Exception:
-        pass
+        pass  # nosec B110

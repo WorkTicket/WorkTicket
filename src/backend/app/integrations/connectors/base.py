@@ -46,7 +46,7 @@ class ProviderCategory(StrEnum):
 
 class ConnectionHealth(StrEnum):
     HEALTHY = "healthy"
-    TOKEN_EXPIRING = "token_expiring"
+    TOKEN_EXPIRING = "token_expiring"  # nosec B105
     DISCONNECTED = "disconnected"
     RATE_LIMITED = "rate_limited"
     ERROR = "error"

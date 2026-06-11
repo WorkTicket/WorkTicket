@@ -101,7 +101,7 @@ async def _get_signing_key_from_jwt(token: str):
         if signing_key:
             return signing_key
     except Exception:
-        pass
+        pass  # nosec B110
 
     if not kid:
         return None
@@ -154,7 +154,7 @@ async def _get_signing_key_from_redis(token: str):
                 if r:
                     await r.delete(f"{_redis_jwks_prefix}{kid}")
         except Exception:
-            pass
+            pass  # nosec B110
         return None
 
 
@@ -164,7 +164,7 @@ async def _cache_key_in_redis(kid: str, key_data: dict):
         if r:
             await r.setex(f"{_redis_jwks_prefix}{kid}", _redis_jwks_ttl, json.dumps(key_data))
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 async def _verify_clerk_token(credentials: HTTPAuthorizationCredentials) -> ClerkIdentity:

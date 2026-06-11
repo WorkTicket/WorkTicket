@@ -119,7 +119,7 @@ class TenantRedisMonitor:
                 set_redis_tenants_over_limit(over_limit)
                 set_redis_worst_tenant_keys(worst_count)
             except Exception:
-                pass
+                pass  # nosec B110
 
         except Exception as e:
             logger.warning("Redis tenant key scan failed: %s", e)

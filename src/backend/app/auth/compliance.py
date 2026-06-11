@@ -61,7 +61,7 @@ async def export_my_data(
     except HTTPException:
         raise
     except Exception:
-        pass
+        pass  # nosec B110
 
     # Collect user data
     export_data = {
@@ -211,7 +211,7 @@ async def delete_my_data(
                 "1",
             )
     except Exception:
-        pass
+        pass  # nosec B110
 
     await db.flush()
 

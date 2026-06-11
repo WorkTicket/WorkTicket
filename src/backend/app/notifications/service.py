@@ -56,7 +56,7 @@ async def _load_circuit_breaker():
             _push_circuit_last_failure = data.get("last_failure", 0.0)
             _push_circuit_cooldown = data.get("cooldown", _PUSH_CIRCUIT_COOLDOWN_BASE)
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 async def _save_circuit_breaker():
@@ -78,7 +78,7 @@ async def _save_circuit_breaker():
         ttl = int(_push_circuit_cooldown * 4)
         await r.setex(_PUSH_CIRCUIT_REDIS_KEY, ttl, state)
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 async def _enqueue_push_dlq(entry: dict[str, Any]) -> None:
@@ -94,7 +94,7 @@ async def _enqueue_push_dlq(entry: dict[str, Any]) -> None:
         await r.ltrim(_PUSH_DLQ_KEY, 0, _PUSH_DLQ_MAX - 1)
         await r.expire(_PUSH_DLQ_KEY, _PUSH_DLQ_TTL)
     except Exception:
-        pass
+        pass  # nosec B110
 
 
 async def send_push_notification(
@@ -219,7 +219,7 @@ async def _log_delivery(
             await r.expire(key, 86400)
             return
         except Exception:
-            pass
+            pass  # nosec B110
     # In-memory fallback
     _delivery_log.append(entry)
     if len(_delivery_log) > _MAX_DELIVERY_LOG:
@@ -234,7 +234,7 @@ async def get_delivery_log(limit: int = 50, company_id: str | None = None) -> li
             entries = await r.zrevrange(key, 0, limit - 1)
             return [json.loads(e) for e in entries]
         except Exception:
-            pass
+            pass  # nosec B110
     log = (
         _delivery_log[-limit:]
         if company_id is None

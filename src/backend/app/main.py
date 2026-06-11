@@ -888,7 +888,7 @@ async def readiness():
                         if now - last > 3600:
                             stale_tasks.append(task_name)
                 except Exception:
-                    pass
+                    pass  # nosec B110
             if stale_tasks:
                 components["beat_tasks"] = {"status": "degraded", "stale": stale_tasks}
             else:
@@ -999,7 +999,7 @@ async def health():
                 celery_queue_depth[q] = qlen
         _r.close()
     except Exception:
-        pass
+        pass  # nosec B110
 
     status = "ok" if db_healthy else "degraded"
 

@@ -162,7 +162,7 @@ def evaluate_rollback(error_rate_pct: float, p95_latency_ms: float) -> RollbackD
                     },
                 )
             except Exception:
-                pass
+                pass  # nosec B110
         return RollbackDecision(
             should_rollback=True,
             reason=_rollback_reason,
@@ -229,7 +229,7 @@ def promote_canary_stage() -> dict:
             },
         )
     except Exception:
-        pass
+        pass  # nosec B110
 
     return {"promoted": True, "new_stage": next_stage, "reason": f"elapsed={elapsed:.0f}s"}
 

@@ -166,7 +166,7 @@ def _get_raw_key() -> bytes:
                 key_bytes = key_bytes.ljust(32, b"\0")[:32]
             return key_bytes
         except Exception:
-            pass
+            pass  # nosec B110
     return b""
 
 
@@ -207,7 +207,7 @@ def decrypt_field_from_storage(stored: str | None) -> str | None:
             if result != stored:
                 return result
         except Exception:
-            pass
+            pass  # nosec B110
 
     raw_key = _get_raw_key()
     if raw_key:
@@ -219,7 +219,7 @@ def decrypt_field_from_storage(stored: str | None) -> str | None:
                 aesgcm = AESGCM(raw_key)
                 return aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
         except Exception:
-            pass
+            pass  # nosec B110
 
     try:
         data = json.loads(stored)

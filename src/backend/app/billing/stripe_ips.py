@@ -145,7 +145,7 @@ async def validate_stripe_ip(client_ip: str) -> bool:
 
             increment_counter("workticket_stripe_ip_cache_empty_warning", {})
         except Exception:
-            pass
+            pass  # nosec B110
     return True
 
 

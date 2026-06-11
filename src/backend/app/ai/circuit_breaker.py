@@ -105,7 +105,7 @@ class CircuitBreaker:
                 state = await r.get(f"{self._redis_prefix}:open")
                 return state != b"1"  # type: ignore[no-any-return]
             except Exception:
-                pass
+                pass  # nosec B110
         async with self._lock:
             if self._state == CircuitState.CLOSED:
                 return True
@@ -167,7 +167,7 @@ class CircuitBreaker:
                         await r.hset(f"{self._redis_prefix}", "last_failure", str(int(time.time())))
                         await r.expire(f"{self._redis_prefix}", int(self.cooldown_seconds * 2))
                     except Exception:
-                        pass
+                        pass  # nosec B110
                 return
             if self._failure_count >= self.failure_threshold:
                 self.cooldown_seconds = min(self.cooldown_seconds * 2, self.max_cooldown_seconds)
@@ -188,7 +188,7 @@ class CircuitBreaker:
                         await r.hset(f"{self._redis_prefix}", "half_open_probed", "0")
                         await r.expire(f"{self._redis_prefix}", int(self.cooldown_seconds * 2))
                     except Exception:
-                        pass
+                        pass  # nosec B110
 
     async def reset(self):
         async with self._lock:

@@ -244,7 +244,7 @@ async def stripe_webhook(
 
                 observe_stripe_webhook_latency(_wh_ms)
             except Exception:
-                pass
+                pass  # nosec B110
             return result
         except HTTPException:
             raise

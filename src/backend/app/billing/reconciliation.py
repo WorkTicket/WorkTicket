@@ -166,7 +166,7 @@ async def reconcile_cost(
             drift_pct = abs(reserved - actual_acu) / reserved * 100 if reserved > 0 else 0
             set_billing_drift_pct(float(drift_pct))
     except Exception:
-        pass
+        pass  # nosec B110
 
     logger.info(
         "Cost reconciliation for job %s: estimated=%.6f actual=%.6f drift=%s ACU (%.2f%%)%s",

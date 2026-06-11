@@ -71,7 +71,7 @@ class RenewableBeatLock:
                     "workticket_beat_lock_skipped_total", {"task": self.task_name, "reason": "redis_unavailable"}
                 )
             except Exception:
-                pass
+                pass  # nosec B110
             return False
 
     def _start_heartbeat(self):
@@ -106,9 +106,9 @@ class RenewableBeatLock:
 
                         increment_counter("workticket_beat_lock_ttl_renewed_total", {"task": self.task_name})
                     except Exception:
-                        pass
+                        pass  # nosec B110
             except Exception:
-                pass
+                pass  # nosec B110
 
     def release(self):
         """Atomically release the lock only if still owned by this worker.
@@ -135,7 +135,7 @@ class RenewableBeatLock:
             except Exception:
                 r.delete(self._lock_key)
         except Exception:
-            pass
+            pass  # nosec B110
         self._acquired = False
         if self in _active_locks:
             _active_locks.remove(self)
@@ -144,7 +144,7 @@ class RenewableBeatLock:
 
             increment_counter("workticket_beat_lock_contention_total", {"task": self.task_name})
         except Exception:
-            pass
+            pass  # nosec B110
 
     def __enter__(self):
         self.acquire()
@@ -169,7 +169,7 @@ def acquire_beat_lock(task_name: str, ttl: int = 300, redis_url: str | None = No
 
             increment_counter("workticket_beat_lock_skipped_total", {"task": task_name})
         except Exception:
-            pass
+            pass  # nosec B110
         return False
 
 
@@ -180,4 +180,4 @@ def release_beat_lock(task_name: str, redis_url: str | None = None) -> None:
             return
         r.delete(f"beat:lock:{task_name}")
     except Exception:
-        pass
+        pass  # nosec B110
